@@ -9,7 +9,7 @@ class FileManager:
         if not exists(path_to_file): raise Exception("File not found in given directory.")
         self.path_to_file: str = path_to_file
         self.backup_path: str = splitext(path_to_file)[0] + ".backup"
-        self.data: dict = {}
+        self.data: dict = self.read_file_data()
 
     @classmethod
     def for_new_file(cls, path_with_filename_and_extension: str) -> None:
@@ -19,9 +19,9 @@ class FileManager:
                       '"tasks":{}}')
         return cls(path_with_filename_and_extension)
 
-    def read_file_to_dict(self) -> None:
+    def read_file_data(self) -> dict:
         with open(self.path_to_file, "r") as f:
-            self.data = load(f)
+            return load(f)
 
     def update_data(self, data: dict) -> None:
         self.data = data
@@ -45,7 +45,7 @@ class DataManager:
         self.data: dict = data
 
     def gen_unique_hash(self) -> str:
-        return uuid4()
+        return uuid4().hex
 
     # ADDING, CHANGING AND REMOVING DATA
     def modify_task(self, data: dict) -> None:
