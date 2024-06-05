@@ -114,7 +114,9 @@ class ScreenManager:
             self.windows[win].refresh()
         except Exception:
             self.windows[win].box()
-            self.windows[win].refresh(self.scroll_x, self.scroll_y, self.main_start_x_y[0], self.main_start_x_y[1], self.main_end_x_y[0], self.main_end_x_y[1])
+            self.windows[win].refresh(self.scroll_x, self.scroll_y,
+                                      self.main_start_x_y[0], self.main_start_x_y[1],
+                                      self.main_end_x_y[0], self.main_end_x_y[1])
 
     def move_content_of_pad(self, direction) -> None:
         pass

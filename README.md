@@ -38,3 +38,17 @@ Q -> [Q]uit program
 **The program does not care about the letter being capitalized**
 
 Further instructions will follow when the key is pressed.
+
+### On Windows
+
+Curses is not installed by default on Windows, so you need to run
+
+```pwsh
+pip install windows-curses
+```
+
+or
+
+```pwsh
+pip install -r requirements.txt
+```
