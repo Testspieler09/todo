@@ -9,15 +9,18 @@ class ScreenManager:
         self.screen = curses.initscr()
         self.file = FileManager(file)
         self.data = DataManager({})
-        curses.start_color()
-        self.dimensions = self.screen.getmaxyx()
-        self.scroll_x, self.scroll_y = 0, 0
-        self.main_start_x_y = (2, 1)
-        self.main_end_x_y = (self.dimensions[0]-2, self.dimensions[1]-1)
+
         lines = help_message.split("\n")
+        self.window_dimensions = [self.screen.getmaxyx(),
+                                  (100, 100),
+                                  (len(lines)+1, max(len(line) for line in lines)+1)]
         self.windows = [self.screen, # footer
-                        curses.newpad(100,100), # main todo
-                        curses.newpad(len(lines)+1, max(len(line) for line in lines)+1)] # help message popup
+                        curses.newpad(self.window_dimensions[1][0], self.window_dimensions[1][1]), # main todo
+                        curses.newpad(self.window_dimensions[2][0], self.window_dimensions[2][1])] # help message popup
+
+        self.scroll_y, self.scroll_x = 0, 0
+        self.main_start_x_y = (2, 1)
+        self.main_end_x_y = (self.window_dimensions[0][0]-2, self.window_dimensions[0][1]-1)
         self.active_window = 1
         self.content = {}# self.load_content(file)
 
@@ -35,11 +38,11 @@ class ScreenManager:
 
     def run_scr(self) -> None:
         headline = "ToDo Manager"
-        self.output_text_to_window(0, self.space_footer_text(footer_text), self.dimensions[0]-1, 0)
+        self.output_text_to_window(0, self.space_footer_text(footer_text), self.window_dimensions[0][0]-1, 0)
         y, _ = self.get_coordinates_for_centered_text(headline)
         self.output_text_to_window(0, headline, 1, y, curses.A_UNDERLINE)
         while True:
-            sleep(0.1) # so program doesn't use 100% cpu
+            sleep(0.01) # so program doesn't use 100% cpu
             key=self.get_input()
             self.event_handler(key)
 
@@ -49,34 +52,57 @@ class ScreenManager:
                                      self.main_end_x_y[0], self.main_end_x_y[1])
 
     def event_handler(self, event: str) -> None:
-            match event:
-                case "KEY_UP":
-                    self.scroll_x += 1
-                    self.scroll_pad(self.active_window)
-                case "KEY_DOWN":
-                    self.scroll_x -= 1
-                    self.scroll_pad(self.active_window)
-                case "KEY_LEFT":
-                    self.scroll_y += 1
-                    self.scroll_pad(self.active_window)
-                case "KEY_RIGHT":
-                    self.scroll_y -= 1
-                    self.scroll_pad(self.active_window)
-                case "H" | "h":
-                    if self.active_window == 2:
-                        self.active_window = 1
-                        self.windows[1].refresh(self.scroll_x, self.scroll_y,
-                                                self.main_start_x_y[0], self.main_start_x_y[1],
-                                                self.main_end_x_y[0], self.main_end_x_y[1])
-                    else:
-                        self.active_window = 2
-                        self.output_text_to_window(2, help_message, 0, 0)
-                case "Q" | "q":
-                    self.kill_scr()
-                    exit()
-                case "KEY_RESIZE":
-                    self.kill_scr()
-                    ScreenManager(self.file)
+        match event:
+            # Scroll operations
+            case "KEY_UP":
+                if abs(self.scroll_x - self.window_dimensions[2][0]-3) <= self.window_dimensions[0][0]:
+                    return
+                self.scroll_x += 1
+                self.scroll_pad(self.active_window)
+            case "KEY_DOWN":
+                self.scroll_x -= 1
+                if self.scroll_x <= 0:
+                    self.scroll_x = 0
+                self.scroll_pad(self.active_window)
+            case "KEY_LEFT":
+                if abs(self.scroll_y - self.window_dimensions[2][1]-1) <= self.window_dimensions[0][1]:
+                    return
+                self.scroll_y += 1
+                self.scroll_pad(self.active_window)
+            case "KEY_RIGHT":
+                self.scroll_y -= 1
+                if self.scroll_y <= 0:
+                    self.scroll_y = 0
+                self.scroll_pad(self.active_window)
+            # Main operations
+            case "G" | "g":
+                pass
+            case "L" | "l":
+                pass
+            case "I" | "i":
+                pass
+            case "C" | "c":
+                pass
+            case "D" | "d":
+                pass
+            case "A" | "a":
+                pass
+            # Default operations
+            case "H" | "h":
+                if self.active_window == 2:
+                    self.active_window = 1
+                    self.windows[1].refresh(self.scroll_x, self.scroll_y,
+                                            self.main_start_x_y[0], self.main_start_x_y[1],
+                                            self.main_end_x_y[0], self.main_end_x_y[1])
+                else:
+                    self.active_window = 2
+                    self.output_text_to_window(2, help_message, 0, 0)
+            case "Q" | "q":
+                self.kill_scr()
+                exit()
+            case "KEY_RESIZE":
+                self.kill_scr()
+                ScreenManager(self.file.path_to_file)
 
     def get_input(self) -> str:
         try:
@@ -91,14 +117,14 @@ class ScreenManager:
         curses.endwin()
 
     def get_coordinates_for_centered_text(self, text: str) -> tuple[int]:
-        height, width = self.dimensions
+        height, width = self.window_dimensions[0]
         start_y = height // 2
         start_x = (width // 2) - (len(text) // 2)
         return start_x, start_y-1
 
     def space_footer_text(self, footer_text: list) -> str:
         char_amount = len("".join(footer_text))
-        width = (self.dimensions[1]-1 - char_amount) // (len(footer_text) - 1)
+        width = (self.window_dimensions[0][1]-1 - char_amount) // (len(footer_text) - 1)
         return "".join([arg + " "*width for arg in footer_text]).strip()
 
     def output_text_to_window(self, win: int, text: str, y=0, x=0, *args) -> None:
@@ -117,9 +143,6 @@ class ScreenManager:
             self.windows[win].refresh(self.scroll_x, self.scroll_y,
                                       self.main_start_x_y[0], self.main_start_x_y[1],
                                       self.main_end_x_y[0], self.main_end_x_y[1])
-
-    def move_content_of_pad(self, direction) -> None:
-        pass
 
 def main(cwd: str) -> None:
     # if exists
