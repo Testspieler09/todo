@@ -104,7 +104,7 @@ class DataManager:
         dictionary = {}
         for hash in task_hashes:
             if hash not in self.data["tasks"].keys(): continue
-            dictionary.update(self.data["tasks"][hash])
+            dictionary.update({hash: self.data["tasks"][hash]})
         return dictionary
 
     def get_data_of_group(self, group_name: str) -> dict:
@@ -113,13 +113,13 @@ class DataManager:
         dictionary = {}
         for hash in task_hashes:
             if hash not in self.data["tasks"].keys(): continue
-            dictionary.update(self.data["tasks"][hash])
+            dictionary.update({hash: self.data["tasks"][hash]})
         return dictionary
 
     def get_data_of_importance(self, importance_lvl: str) -> dict:
         dictionary = {}
-        for item in self.data["tasks"].values():
-            if item["importance"] == importance_lvl: dictionary.update(item)
+        for key, values in self.data["tasks"].items():
+            if values["importance"] == importance_lvl: dictionary.update({key: values})
         return dictionary
 
     def get_all_data(self) -> dict:

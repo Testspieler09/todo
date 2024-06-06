@@ -1,14 +1,15 @@
 import curses
 from time import sleep
 from sys import exit
+from os.path import exists
 from help import footer_text, help_message
 from FileManager import FileManager, DataManager
 
 class ScreenManager:
     def __init__(self, file: str) -> None:
         self.screen = curses.initscr()
-        self.file = FileManager(file)
-        self.data = DataManager({})
+        self.file = file
+        self.data = DataManager(self.file.data)
 
         lines = help_message.split("\n")
         self.window_dimensions = [self.screen.getmaxyx(),
@@ -19,6 +20,7 @@ class ScreenManager:
                         curses.newpad(self.window_dimensions[2][0], self.window_dimensions[2][1])] # help message popup
 
         self.scroll_y, self.scroll_x = 0, 0
+        self.last_scroll_pos_main_scr = (0, 0)
         self.main_start_x_y = (2, 1)
         self.main_end_x_y = (self.window_dimensions[0][0]-2, self.window_dimensions[0][1]-1)
         self.active_window = 1
@@ -41,6 +43,7 @@ class ScreenManager:
         self.output_text_to_window(0, self.space_footer_text(footer_text), self.window_dimensions[0][0]-1, 0)
         y, _ = self.get_coordinates_for_centered_text(headline)
         self.output_text_to_window(0, headline, 1, y, curses.A_UNDERLINE)
+        self.output_text_to_window(1, str(self.data.get_data_of_group("Project 1")), 1, 1)
         while True:
             sleep(0.01) # so program doesn't use 100% cpu
             key=self.get_input()
@@ -54,22 +57,22 @@ class ScreenManager:
     def event_handler(self, event: str) -> None:
         match event:
             # Scroll operations
-            case "KEY_UP":
-                if abs(self.scroll_x - self.window_dimensions[2][0]-3) <= self.window_dimensions[0][0]:
+            case "KEY_DOWN":
+                if abs(self.scroll_x - self.window_dimensions[self.active_window][0]-3) <= self.window_dimensions[0][0]:
                     return
                 self.scroll_x += 1
                 self.scroll_pad(self.active_window)
-            case "KEY_DOWN":
+            case "KEY_UP":
                 self.scroll_x -= 1
                 if self.scroll_x <= 0:
                     self.scroll_x = 0
                 self.scroll_pad(self.active_window)
-            case "KEY_LEFT":
-                if abs(self.scroll_y - self.window_dimensions[2][1]-1) <= self.window_dimensions[0][1]:
+            case "KEY_RIGHT":
+                if abs(self.scroll_y - self.window_dimensions[self.active_window][1]-1) <= self.window_dimensions[0][1]:
                     return
                 self.scroll_y += 1
                 self.scroll_pad(self.active_window)
-            case "KEY_RIGHT":
+            case "KEY_LEFT":
                 self.scroll_y -= 1
                 if self.scroll_y <= 0:
                     self.scroll_y = 0
@@ -91,11 +94,14 @@ class ScreenManager:
             case "H" | "h":
                 if self.active_window == 2:
                     self.active_window = 1
+                    self.scroll_x, self.scroll_y = self.last_scroll_pos_main_scr
                     self.windows[1].refresh(self.scroll_x, self.scroll_y,
                                             self.main_start_x_y[0], self.main_start_x_y[1],
                                             self.main_end_x_y[0], self.main_end_x_y[1])
                 else:
                     self.active_window = 2
+                    self.last_scroll_pos_main_scr = (self.scroll_x, self.scroll_y)
+                    self.scroll_x, self.scroll_y = 0, 0
                     self.output_text_to_window(2, help_message, 0, 0)
             case "Q" | "q":
                 self.kill_scr()
@@ -145,8 +151,12 @@ class ScreenManager:
                                       self.main_end_x_y[0], self.main_end_x_y[1])
 
 def main(cwd: str) -> None:
-    # if exists
-    screen = ScreenManager(f"{cwd}\\data.json")
+    filepath = f"{cwd}\\data.json"
+    if exists(filepath):
+        file = FileManager(filepath)
+    else:
+        file = FileManager.for_new_file(filepath)
+    screen = ScreenManager(file)
 
 if __name__ == "__main__":
     from os import getcwd
