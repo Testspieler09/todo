@@ -5,6 +5,9 @@ from json import load, dumps
 from uuid import uuid4
 
 class FileManager:
+    """
+    A class that manages a JSON file and the respective backup file
+    """
     def __init__(self, path_to_file: str) -> None:
         if not exists(path_to_file): raise Exception("File not found in given directory.")
         self.path_to_file: str = path_to_file
@@ -40,10 +43,35 @@ class FileManager:
             f.write(str(dumps(self.data)))
 
 class DataManager:
+    """
+    A class that manages a dict that was created from a JSON file of the following scheme:
+    {
+        "order of tasks in group": {"group name": ["hash of first task", "..."]},
+        "tasks": {
+            "task_hash": {
+                "name": str,
+                "description": str,
+                "steps": {
+                    "name": str,
+                    "description": str,
+                    "importance": str,
+                    "index": int
+                },
+                "importance": str,
+                "index": int,
+                "labels": list,
+                "groups": list
+            }
+        }
+    }
+    """
     def __init__(self, data: dict):
         self.data: dict = data
 
     def gen_unique_hash(self) -> str:
+        """
+        Generates the task hash
+        """
         return uuid4().hex
 
     # ADDING, CHANGING AND REMOVING DATA
@@ -82,11 +110,15 @@ class DataManager:
         if task_hash not in self.data["tasks"].keys(): return
         self.data["tasks"][task_hash].update({"importance": importance})
 
-    def change_order_of_tasks(self, new_order: dict) -> None:
+    def change_global_order_of_tasks(self, new_order: dict) -> None:
         # new order consist of task_hash: number
         for hash, value in new_order.items():
             if hash not in self.data["tasks"].keys(): continue
             self.data["tasks"][hash]["index"] = value
+
+    def change_group_order_of_tasks(self, group_name: str, order: list[str]) -> None:
+        if group_name not in self.data["order of tasks in group"]: return
+        self.data["order of tasks in group"][group_name] = order
 
     def change_order_of_steps(self, task_hash: str, new_order: dict) -> None:
         if task_hash not in self.data["tasks"].keys(): return
@@ -127,10 +159,15 @@ class DataManager:
         output = []
         data = dict(sorted(data.items(), key=lambda item: item[1]['index']))
         for idx, values in enumerate(data.values()):
-            output.append(f"{idx+1}. {values['name']} {''.join(f'[{label}]' for label in values['labels'])}")
+            output.append([f"{idx+1}. {values['name']} {''.join(f'[{label}]' for label in values['labels'])}", values["importance"]])
         return output
 
     def display_task_details(self, data: dict, task_hash: str) -> str:
+        """
+        A function that displays all tasks passed to it and the details of a specific one
+        Only pass the tasks dict or part of it to this function otherwise it wont work
+        The function returns a list so the ScreenManager can add color based on the tasks importance.
+        """
         return str(data)
 
 if __name__ == "__main__":

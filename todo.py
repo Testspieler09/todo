@@ -11,20 +11,30 @@ class ScreenManager:
         self.file = file
         self.data = DataManager(self.file.data)
 
-        lines = help_message.split("\n")
+# len(self.data.get_all_data())+2
+        help_lines = help_message.split("\n")
         self.window_dimensions = [self.screen.getmaxyx(),
-                                  (100, 100),
-                                  (len(lines)+1, max(len(line) for line in lines)+1)]
+                                  (self.screen.getmaxyx()[0]-3, self.screen.getmaxyx()[1]),
+                                  (len(help_lines)+1, max(len(line) for line in help_lines)+1)]
         self.windows = [self.screen, # footer
                         curses.newpad(self.window_dimensions[1][0], self.window_dimensions[1][1]), # main todo
                         curses.newpad(self.window_dimensions[2][0], self.window_dimensions[2][1])] # help message popup
 
         self.scroll_y, self.scroll_x = 0, 0
         self.last_scroll_pos_main_scr = (0, 0)
-        self.main_start_x_y = (2, 1)
+        self.main_start_x_y = (2, 0)
         self.main_end_x_y = (self.window_dimensions[0][0]-2, self.window_dimensions[0][1]-1)
         self.active_window = 1
         self.content = {}# self.load_content(file)
+
+        # COLOR STUFF FOR IMPORTANCE
+        curses.start_color()
+        curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
+        curses.init_pair(2, curses.COLOR_BLUE, curses.COLOR_BLACK)
+        curses.init_pair(3, curses.COLOR_RED, curses.COLOR_BLACK)
+        self.low_importance = curses.color_pair(1)
+        self.medium_importance = curses.color_pair(2)
+        self.high_importance = curses.color_pair(3)
 
         # ADJUST SETTINGS
         curses.curs_set(0)
@@ -43,7 +53,7 @@ class ScreenManager:
         self.output_text_to_window(0, self.space_footer_text(footer_text), self.window_dimensions[0][0]-1, 0)
         y, _ = self.get_coordinates_for_centered_text(headline)
         self.output_text_to_window(0, headline, 1, y, curses.A_UNDERLINE)
-        self.output_text_to_window(1, str(self.data.get_data_of_group("Project 1")), 1, 1)
+        self.beautify_output(1, self.data.display_tasks(self.data.get_all_data()), 1, 1)
         while True:
             sleep(0.01) # so program doesn't use 100% cpu
             key=self.get_input()
@@ -68,7 +78,7 @@ class ScreenManager:
                     self.scroll_x = 0
                 self.scroll_pad(self.active_window)
             case "KEY_RIGHT":
-                if abs(self.scroll_y - self.window_dimensions[self.active_window][1]-1) <= self.window_dimensions[0][1]:
+                if abs(self.scroll_y - self.window_dimensions[self.active_window][1]) <= self.window_dimensions[0][1]:
                     return
                 self.scroll_y += 1
                 self.scroll_pad(self.active_window)
@@ -108,7 +118,7 @@ class ScreenManager:
                 exit()
             case "KEY_RESIZE":
                 self.kill_scr()
-                ScreenManager(self.file.path_to_file)
+                ScreenManager(self.file)
 
     def get_input(self) -> str:
         try:
@@ -149,6 +159,14 @@ class ScreenManager:
             self.windows[win].refresh(self.scroll_x, self.scroll_y,
                                       self.main_start_x_y[0], self.main_start_x_y[1],
                                       self.main_end_x_y[0], self.main_end_x_y[1])
+
+    def beautify_output(self, win: int, data: list[list[str]], start_y: int, start_x: int) -> None:
+        for line, importance in data:
+            if importance != "None":
+                self.output_text_to_window(1, line, start_y, start_x, self.__dict__[f"{importance}_importance"])
+            else:
+                self.output_text_to_window(1, line, start_y, start_x)
+            start_y += 1
 
 def main(cwd: str) -> None:
     filepath = f"{cwd}\\data.json"
