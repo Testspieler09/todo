@@ -157,6 +157,7 @@ class DataManager:
         The function returns a list so the ScreenManager can add color based on the tasks importance.
         """
         output = []
+        if data == {}: return [["You did not create a task yet. Press A to change that.", "None"]]
         data = dict(sorted(data.items(), key=lambda item: item[1]['index']))
         for idx, values in enumerate(data.values()):
             output.append([f"{idx+1}. {values['name']} {''.join(f'[{label}]' for label in values['labels'])}", values["importance"]])
@@ -168,7 +169,20 @@ class DataManager:
         Only pass the tasks dict or part of it to this function otherwise it wont work
         The function returns a list so the ScreenManager can add color based on the tasks importance.
         """
-        return str(data)
+        output = []
+        data = dict(sorted(data.items(), key=lambda item: item[1]['index']))
+        for idx, items in enumerate(data.items()):
+            output.append([f"{idx+1}. {items[1]['name']} {''.join(f'[{label}]' for label in items[1]['labels'])}", items[1]["importance"]])
+            # display details
+            if items[0] == task_hash:
+                if items[1]["description"] != "": output.append([items[1]["description"], "None"])
+                # display steps with details
+                sorted_steps = dict(sorted(items[1]["steps"].items(), key=lambda item: item[1]["index"]))
+                for idx_2, values in enumerate(sorted_steps.values()):
+                    output.append([f"\t{idx+1}.{idx_2+1} {values['name']}", values["importance"]])
+                    if values["description"] != "": output.append([f"\t{values['description']}", "None"])
+                    output.append(["\n", "None"])
+        return output
 
 if __name__ == "__main__":
     from os import getcwd

@@ -11,8 +11,16 @@ class ScreenManager:
         self.file = file
         self.data = DataManager(self.file.data)
 
-# len(self.data.get_all_data())+2
         help_lines = help_message.split("\n")
+        # DETERMINE THE SIZE OF THE MAIN PAD
+        # if text_to_display longer than main_scr_y:
+        #     y = length text to display
+        # else:
+        #     y = main_scr_y
+        # if entries_to_display higher than main_scr_x:
+        #     x = entries_to_display
+        # else:
+        #     x = main_scr_x
         self.window_dimensions = [self.screen.getmaxyx(),
                                   (self.screen.getmaxyx()[0]-3, self.screen.getmaxyx()[1]),
                                   (len(help_lines)+1, max(len(line) for line in help_lines)+1)]
@@ -60,9 +68,8 @@ class ScreenManager:
             self.event_handler(key)
 
     def scroll_pad(self, pad_id: int) -> None:
-        self.windows[pad_id].refresh(self.scroll_x, self.scroll_y,
-                                     self.main_start_x_y[0], self.main_start_x_y[1],
-                                     self.main_end_x_y[0], self.main_end_x_y[1])
+        start_x, start_y, end_x, end_y = self.get_coordinates_for_centered_pad(pad_id)
+        self.windows[pad_id].refresh(self.scroll_x, self.scroll_y, start_x, start_y, end_x, end_y)
 
     def event_handler(self, event: str) -> None:
         match event:
@@ -138,6 +145,21 @@ class ScreenManager:
         start_x = (width // 2) - (len(text) // 2)
         return start_x, start_y-1
 
+    def get_coordinates_for_centered_pad(self, win: int) -> list[int]:
+        """
+        Function returns top-left and bottom-right corner of pad so that it is centered (if possible)
+        """
+        start_coords = [2, 0]
+        end_coords = [self.window_dimensions[0][0]-2, self.window_dimensions[0][1]-1]
+        if self.window_dimensions[0][0]-3 > self.window_dimensions[win][0]:
+            start_coords[0] = (self.window_dimensions[0][0])//2 - self.window_dimensions[win][0]//2 + start_coords[0]
+            end_coords[0] = start_coords[0] + self.window_dimensions[win][0]
+        if self.window_dimensions[0][1] > self.window_dimensions[win][1]:
+            start_coords[1] = self.window_dimensions[0][1]//2-self.window_dimensions[win][1]//2 - 1
+            end_coords[1] = start_coords[1] + self.window_dimensions[win][1] - 1
+        start_coords.extend(end_coords)
+        return start_coords
+
     def space_footer_text(self, footer_text: list) -> str:
         char_amount = len("".join(footer_text))
         width = (self.window_dimensions[0][1]-1 - char_amount) // (len(footer_text) - 1)
@@ -156,9 +178,8 @@ class ScreenManager:
             self.windows[win].refresh()
         except Exception:
             self.windows[win].box()
-            self.windows[win].refresh(self.scroll_x, self.scroll_y,
-                                      self.main_start_x_y[0], self.main_start_x_y[1],
-                                      self.main_end_x_y[0], self.main_end_x_y[1])
+            start_x, start_y, end_x, end_y = self.get_coordinates_for_centered_pad(win)
+            self.windows[win].refresh(self.scroll_x, self.scroll_y, start_x, start_y, end_x, end_y)
 
     def beautify_output(self, win: int, data: list[list[str]], start_y: int, start_x: int) -> None:
         for line, importance in data:
