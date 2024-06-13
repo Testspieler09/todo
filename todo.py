@@ -11,18 +11,20 @@ class ScreenManager:
         self.file = file
         self.data = DataManager(self.file.data)
 
-        help_lines = help_message.split("\n")
         # DETERMINE THE SIZE OF THE MAIN PAD
-        # if text_to_display longer than main_scr_y:
-        #     y = length text to display
-        # else:
-        #     y = main_scr_y
-        # if entries_to_display higher than main_scr_x:
-        #     x = entries_to_display
-        # else:
-        #     x = main_scr_x
+        max_dimensions = self.data.get_longest_entry_beautified()
+        if max_dimensions[0] > self.screen.getmaxyx()[0]-3:
+            y = max_dimensions[0]
+        else:
+            y = self.screen.getmaxyx()[0]-3
+        if max_dimensions[1]+2 > self.screen.getmaxyx()[1]:
+            x = max_dimensions[1]+2
+        else:
+            x = self.screen.getmaxyx()[1]
+
+        help_lines = help_message.split("\n")
         self.window_dimensions = [self.screen.getmaxyx(),
-                                  (self.screen.getmaxyx()[0]-3, self.screen.getmaxyx()[1]),
+                                  (y, x),
                                   (len(help_lines)+1, max(len(line) for line in help_lines)+1)]
         self.windows = [self.screen, # footer
                         curses.newpad(self.window_dimensions[1][0], self.window_dimensions[1][1]), # main todo
@@ -61,7 +63,7 @@ class ScreenManager:
         self.output_text_to_window(0, self.space_footer_text(footer_text), self.window_dimensions[0][0]-1, 0)
         y, _ = self.get_coordinates_for_centered_text(headline)
         self.output_text_to_window(0, headline, 1, y, curses.A_UNDERLINE)
-        self.beautify_output(1, self.data.display_tasks(self.data.get_all_data()), 1, 1)
+        self.beautify_output(1, self.data.display_task_details(self.data.get_all_data(), "9b01b502aacd431dbae9ea9eba02d917"), 1, 1)
         while True:
             sleep(0.01) # so program doesn't use 100% cpu
             key=self.get_input()
@@ -148,14 +150,15 @@ class ScreenManager:
     def get_coordinates_for_centered_pad(self, win: int) -> list[int]:
         """
         Function returns top-left and bottom-right corner of pad so that it is centered (if possible)
+        Should only center pop-ups like the help one
         """
         start_coords = [2, 0]
-        end_coords = [self.window_dimensions[0][0]-2, self.window_dimensions[0][1]-1]
+        end_coords = list(self.main_end_x_y)
         if self.window_dimensions[0][0]-3 > self.window_dimensions[win][0]:
-            start_coords[0] = (self.window_dimensions[0][0])//2 - self.window_dimensions[win][0]//2 + start_coords[0]
+            start_coords[0] = (self.window_dimensions[0][0]-1)//2 - self.window_dimensions[win][0]//2 + start_coords[0]
             end_coords[0] = start_coords[0] + self.window_dimensions[win][0]
         if self.window_dimensions[0][1] > self.window_dimensions[win][1]:
-            start_coords[1] = self.window_dimensions[0][1]//2-self.window_dimensions[win][1]//2 - 1
+            start_coords[1] = (self.window_dimensions[0][1]-1)//2-self.window_dimensions[win][1]//2
             end_coords[1] = start_coords[1] + self.window_dimensions[win][1] - 1
         start_coords.extend(end_coords)
         return start_coords

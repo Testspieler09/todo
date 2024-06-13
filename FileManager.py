@@ -67,6 +67,7 @@ class DataManager:
     """
     def __init__(self, data: dict):
         self.data: dict = data
+        self.TAB_INDENT = 8
 
     def gen_unique_hash(self) -> str:
         """
@@ -148,6 +149,25 @@ class DataManager:
     def get_all_data(self) -> dict:
         return self.data["tasks"]
 
+    def get_longest_entry_beautified(self) -> tuple[int]:
+        """
+        Function returns the length of the longest beautified entry
+        """
+        output = []
+        # generate all outputs for all step hashes and determine the max len and height than
+        data = dict(sorted(self.data["tasks"].items(), key=lambda item: item[1]['index']))
+        for idx, items in enumerate(data.items()):
+            output.append(f"{idx+1}. {items[1]['name']} {''.join(f'[{label}]' for label in items[1]['labels'])}")
+            # display details
+            if items[1]["description"] != "": output.append(items[1]["description"])
+            # display steps with details
+            sorted_steps = dict(sorted(items[1]["steps"].items(), key=lambda item: item[1]["index"]))
+            for idx_2, values in enumerate(sorted_steps.values()):
+                output.append(f"{' '*self.TAB_INDENT}{idx+1}.{idx_2+1} {values['name']}")
+                if values["description"] != "": output.append(f"{' '*self.TAB_INDENT}{values['description']}")
+                output.append("\n")
+        return (len(output), len(max(output, key=lambda x: len(x))))
+
     # Beautify Data for display purposes
     def display_tasks(self, data: dict) -> list:
         """
@@ -179,8 +199,8 @@ class DataManager:
                 # display steps with details
                 sorted_steps = dict(sorted(items[1]["steps"].items(), key=lambda item: item[1]["index"]))
                 for idx_2, values in enumerate(sorted_steps.values()):
-                    output.append([f"\t{idx+1}.{idx_2+1} {values['name']}", values["importance"]])
-                    if values["description"] != "": output.append([f"\t{values['description']}", "None"])
+                    output.append([f"{' '*self.TAB_INDENT}{idx+1}.{idx_2+1} {values['name']}", values["importance"]])
+                    if values["description"] != "": output.append([f"{' '*self.TAB_INDENT}{values['description']}", "None"])
                     output.append(["\n", "None"])
         return output
 
