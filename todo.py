@@ -13,8 +13,8 @@ class ScreenManager:
 
         # DETERMINE THE SIZE OF THE MAIN PAD
         max_dimensions = self.data.get_longest_entry_beautified()
-        if max_dimensions[0] > self.screen.getmaxyx()[0]-3:
-            y = max_dimensions[0]
+        if max_dimensions[0]+2 > self.screen.getmaxyx()[0]-3:
+            y = max_dimensions[0]+2
         else:
             y = self.screen.getmaxyx()[0]-3
         if max_dimensions[1]+2 > self.screen.getmaxyx()[1]:
@@ -98,7 +98,7 @@ class ScreenManager:
                 self.scroll_pad(self.active_window)
             # Main operations
             case "G" | "g":
-                pass
+                print(self.get_input_string().decode('utf-8', 'backslashreplace'))
             case "L" | "l":
                 pass
             case "I" | "i":
@@ -191,6 +191,26 @@ class ScreenManager:
             else:
                 self.output_text_to_window(1, line, start_y, start_x)
             start_y += 1
+
+    def get_input_string(self) -> str:
+        # Init new window and change some settings
+        win = curses.newwin(self.main_end_x_y[0]-3, self.main_end_x_y[1]-1, self.main_start_x_y[0]+1, self.main_start_x_y[1]+1)
+        curses.echo()
+        curses.curs_set(1)
+
+        # Output info and get input
+        win.addstr(0, 0, 'Hello bro')
+        win.refresh()
+        input = win.getstr(3, 0, 200)
+
+        # Clean up the window and settings changed
+        del win
+        curses.noecho()
+        curses.curs_set(0)
+        self.windows[1].refresh(self.scroll_x, self.scroll_y,
+                                self.main_start_x_y[0], self.main_start_x_y[1],
+                                self.main_end_x_y[0], self.main_end_x_y[1])
+        return input
 
 def main(cwd: str) -> None:
     filepath = f"{cwd}\\data.json"

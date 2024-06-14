@@ -23,6 +23,7 @@ Key cheat sheet
 ===============
 
 Arrow-Keys -> navigation/scrolling content
+S -> [s]how more information of task
 
 G -> display tasks of specific [G]roup
 L -> display tasks of specific [L]abel
