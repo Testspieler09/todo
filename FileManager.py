@@ -149,6 +149,18 @@ class DataManager:
     def get_all_data(self) -> dict:
         return self.data["tasks"]
 
+    def get_hash_of_task_with_index(self, idx: int, type_of_idx: str) -> str:
+        match type_of_idx:
+            case "standard":
+                for key, values in self.data["tasks"].items():
+                    if values["index"] == idx-1: return key
+            case "group":
+                try:
+                    self.data["order of tasks in group"][idx-1]
+                except:
+                    pass
+        return ""
+
     def get_longest_entry_beautified(self) -> tuple[int]:
         """
         Function returns the length of the longest beautified entry
@@ -169,27 +181,14 @@ class DataManager:
         return (len(output), len(max(output, key=lambda x: len(x))))
 
     # Beautify Data for display purposes
-    def display_tasks(self, data: dict) -> list:
-        """
-        A function to display the tasks in a nice way.
-        e.g. Task 1 [label][label_2]
-        Only pass the tasks dict or part of it to this function otherwise it wont work
-        The function returns a list so the ScreenManager can add color based on the tasks importance.
-        """
-        output = []
-        if data == {}: return [["You did not create a task yet. Press A to change that.", "None"]]
-        data = dict(sorted(data.items(), key=lambda item: item[1]['index']))
-        for idx, values in enumerate(data.values()):
-            output.append([f"{idx+1}. {values['name']} {''.join(f'[{label}]' for label in values['labels'])}", values["importance"]])
-        return output
-
-    def display_task_details(self, data: dict, task_hash: str) -> str:
+    def display_task_details(self, data: dict, task_hash="") -> str:
         """
         A function that displays all tasks passed to it and the details of a specific one
         Only pass the tasks dict or part of it to this function otherwise it wont work
         The function returns a list so the ScreenManager can add color based on the tasks importance.
         """
         output = []
+        if data == {}: return [["You did not create a task yet. Press A to change that.", "None"]]
         data = dict(sorted(data.items(), key=lambda item: item[1]['index']))
         for idx, items in enumerate(data.items()):
             output.append([f"{idx+1}. {items[1]['name']} {''.join(f'[{label}]' for label in items[1]['labels'])}", items[1]["importance"]])
@@ -201,7 +200,7 @@ class DataManager:
                 for idx_2, values in enumerate(sorted_steps.values()):
                     output.append([f"{' '*self.TAB_INDENT}{idx+1}.{idx_2+1} {values['name']}", values["importance"]])
                     if values["description"] != "": output.append([f"{' '*self.TAB_INDENT}{values['description']}", "None"])
-                    output.append(["\n", "None"])
+                output.append(["\n", "None"])
         return output
 
 if __name__ == "__main__":

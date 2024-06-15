@@ -1,8 +1,10 @@
 import curses
 from time import sleep
 from sys import exit
+from re import match
+from textwrap import wrap
 from os.path import exists
-from help import footer_text, help_message
+from help import footer_text, help_message, instructions, wrong_input_message
 from FileManager import FileManager, DataManager
 
 class ScreenManager:
@@ -10,6 +12,8 @@ class ScreenManager:
         self.screen = curses.initscr()
         self.file = file
         self.data = DataManager(self.file.data)
+        self.running = True
+        self.current_order = "standard" # other would be group
 
         # DETERMINE THE SIZE OF THE MAIN PAD
         max_dimensions = self.data.get_longest_entry_beautified()
@@ -35,7 +39,7 @@ class ScreenManager:
         self.main_start_x_y = (2, 0)
         self.main_end_x_y = (self.window_dimensions[0][0]-2, self.window_dimensions[0][1]-1)
         self.active_window = 1
-        self.content = {}# self.load_content(file)
+        self.content = self.data.get_all_data()# self.load_content(file)
 
         # COLOR STUFF FOR IMPORTANCE
         curses.start_color()
@@ -63,8 +67,8 @@ class ScreenManager:
         self.output_text_to_window(0, self.space_footer_text(footer_text), self.window_dimensions[0][0]-1, 0)
         y, _ = self.get_coordinates_for_centered_text(headline)
         self.output_text_to_window(0, headline, 1, y, curses.A_UNDERLINE)
-        self.beautify_output(1, self.data.display_task_details(self.data.get_all_data(), "9b01b502aacd431dbae9ea9eba02d917"), 1, 1)
-        while True:
+        self.beautify_output(1, self.data.display_task_details(self.content), 1, 1)
+        while self.running:
             sleep(0.01) # so program doesn't use 100% cpu
             key=self.get_input()
             self.event_handler(key)
@@ -97,17 +101,23 @@ class ScreenManager:
                     self.scroll_y = 0
                 self.scroll_pad(self.active_window)
             # Main operations
-            case "G" | "g":
-                print(self.get_input_string().decode('utf-8', 'backslashreplace'))
-            case "L" | "l":
-                pass
-            case "I" | "i":
+            case "S" | "s":
+                input_length = 12
+                input = self.get_input_string(instructions["show"], input_length)
+                while not match(r"\d+", input):
+                    input = self.get_input_string(wrong_input_message + instructions["show"], input_length)
+                if input=="0":
+                    self.beautify_output(1, self.data.display_task_details(self.data.get_all_data()))
+                else:
+                    task_hash = self.data.get_hash_of_task_with_index(int(input), self.current_order)
+                    self.beautify_output(1, self.data.display_task_details(self.content, task_hash))
+            case "A" | "a":
                 pass
             case "C" | "c":
                 pass
             case "D" | "d":
                 pass
-            case "A" | "a":
+            case "X" | "x":
                 pass
             # Default operations
             case "H" | "h":
@@ -124,7 +134,6 @@ class ScreenManager:
                     self.output_text_to_window(2, help_message, 0, 0)
             case "Q" | "q":
                 self.kill_scr()
-                exit()
             case "KEY_RESIZE":
                 self.kill_scr()
                 ScreenManager(self.file)
@@ -136,6 +145,7 @@ class ScreenManager:
             return None
 
     def kill_scr(self) -> None:
+        self.running = False
         curses.nocbreak()
         self.screen.keypad(False)
         curses.echo()
@@ -184,7 +194,8 @@ class ScreenManager:
             start_x, start_y, end_x, end_y = self.get_coordinates_for_centered_pad(win)
             self.windows[win].refresh(self.scroll_x, self.scroll_y, start_x, start_y, end_x, end_y)
 
-    def beautify_output(self, win: int, data: list[list[str]], start_y: int, start_x: int) -> None:
+    def beautify_output(self, win: int, data: list[list[str]], start_y=1, start_x=1) -> None:
+        self.windows[win].clear()
         for line, importance in data:
             if importance != "None":
                 self.output_text_to_window(1, line, start_y, start_x, self.__dict__[f"{importance}_importance"])
@@ -192,16 +203,24 @@ class ScreenManager:
                 self.output_text_to_window(1, line, start_y, start_x)
             start_y += 1
 
-    def get_input_string(self) -> str:
+    def make_message_fit_width(self, message: str, width: int) -> str:
+        paras = ["dbc71b7fc9e348da85ae5e095bd80855" if i == "" else i for i in message.splitlines()] # using a uuid4 here to preserve the custom linespacing via `\n`
+        lines = [" "+j for i in paras for j in wrap(i,width)]
+        return "\n".join(["" if i==" dbc71b7fc9e348da85ae5e095bd80855" else i for i in lines])
+
+    def get_input_string(self, message: str, input_length: int) -> str:
         # Init new window and change some settings
-        win = curses.newwin(self.main_end_x_y[0]-3, self.main_end_x_y[1]-1, self.main_start_x_y[0]+1, self.main_start_x_y[1]+1)
+        win = curses.newwin(self.main_end_x_y[0]-1, self.main_end_x_y[1]+1, self.main_start_x_y[0], self.main_start_x_y[1])
         curses.echo()
         curses.curs_set(1)
 
         # Output info and get input
-        win.addstr(0, 0, 'Hello bro')
+        message = self.make_message_fit_width(message, self.window_dimensions[0][1]-2)
+        win.addstr(1, 0, message)
+        height_of_msg = len(message.splitlines())+1
+        win.box()
         win.refresh()
-        input = win.getstr(3, 0, 200)
+        input = win.getstr(height_of_msg, 1, input_length).decode('utf-8', 'backslashreplace')
 
         # Clean up the window and settings changed
         del win
@@ -219,6 +238,8 @@ def main(cwd: str) -> None:
     else:
         file = FileManager.for_new_file(filepath)
     screen = ScreenManager(file)
+    print("Do backup stuff here")
+    exit()
 
 if __name__ == "__main__":
     from os import getcwd

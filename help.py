@@ -3,17 +3,17 @@ help_message = """
  ===============
 
  Arrow-Keys -> navigation/scrolling content
- S -> [s]how more information of task
+ S -> [S]how more information of task
 
- G -> display tasks of specific [G]roup
- L -> display tasks of specific [L]abel
- I -> display tasks of specific [I]mportance
- C -> [C]hange data
- D -> [D]elete task/step
  A -> [A]dd task/step
+ C -> [C]hange data/order
+ D -> [D]isplay tasks of specific group, label or importance
+ X -> delete task/step
 
  H -> toggle this [H]elpmessage
  Q -> [Q]uit program"""
+
+wrong_input_message = "The provided input doesn't match the wanted pattern.\n\n"
 
 footer_text = ["[H]elp", "[Q]uit"]
 
@@ -37,7 +37,8 @@ instructions = {
                 }
             },
         "delete": "Delete Data:\nWhat do you want to delete?\n[t]ask, [s]tep, [l]abel, [g]roup",
-        "show": "Show more details:\nPlease provide the number or index of the task you want to expand.\ne.g. `1` [for a the first task] or `1.2` [for the second step of the first task]"
+        "show": "Show more details:\nPlease provide the number or index of the task you want to expand.\ne.g. `1` [for a the first task]\nTIPP: `0` -> close details of given task",
+        "display": {}
         }
 
 if __name__ == "__main__":

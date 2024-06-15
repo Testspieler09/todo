@@ -23,14 +23,12 @@ Key cheat sheet
 ===============
 
 Arrow-Keys -> navigation/scrolling content
-S -> [s]how more information of task
+S -> [S]how more information of task
 
-G -> display tasks of specific [G]roup
-L -> display tasks of specific [L]abel
-I -> display tasks of specific [I]mportance
-C -> [C]hange data
-D -> [D]elete task/step
 A -> [A]dd task/step
+C -> [C]hange data/order
+D -> [D]isplay tasks of specific group, label or importance
+X -> delete task/step
 
 H -> toggle this [H]elpmessage
 Q -> [Q]uit program
