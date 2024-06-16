@@ -38,7 +38,14 @@ instructions = {
             },
         "delete": "Delete Data:\nWhat do you want to delete?\n[t]ask, [s]tep, [l]abel, [g]roup",
         "show": "Show more details:\nPlease provide the number or index of the task you want to expand.\ne.g. `1` [for a the first task]\nTIPP: `0` -> close details of given task",
-        "display": {}
+        "display": {
+            "1": "Display Data:\nDo you want to display all tasks of a [g]roup, [l]abel or [i]mportance?\nTo disable the current filter use `0`",
+            "2": {
+                "group": "Display tasks of group:\nPlease provide the number/index of the group.\n",
+                "label": "Display tasks of label:\nPlease provide the number/index of the label.\n",
+                "importance": "Display tasks of importance:\nPlease choose between [l]ow, [m]edium, [h]igh or [n]one.\n"
+                }
+            }
         }
 
 if __name__ == "__main__":

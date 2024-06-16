@@ -131,13 +131,13 @@ class DataManager:
     def get_data_with_label(self, label: str) -> dict | None:
         dictionary = {}
         for key, values in self.data["tasks"].items():
-            if values["labels"] == label: dictionary.update({key: values})
+            if label in values["labels"]: dictionary.update({key: values})
         return dictionary
 
     def get_data_of_group(self, group_name: str) -> dict:
         dictionary = {}
         for key, values in self.data["tasks"].items():
-            if values["groups"] == group_name: dictionary.update({key: values})
+            if group_name in values["groups"]: dictionary.update({key: values})
         return dictionary
 
     def get_data_of_importance(self, importance_lvl: str) -> dict:
@@ -149,17 +149,52 @@ class DataManager:
     def get_all_data(self) -> dict:
         return self.data["tasks"]
 
-    def get_hash_of_task_with_index(self, idx: int, type_of_idx: str) -> str:
-        match type_of_idx:
+    def get_groups(self) -> str:
+        group_names = "\n"
+        list_of_groups = []
+        for idx, name in enumerate(self.data["order of tasks in group"].keys()):
+            group_names += f"{idx+1}. {name} | "
+            list_of_groups.append(name)
+        if group_names=="\n": return "\nThere are no groups defined. Input any number to continue."
+        return group_names, list_of_groups
+
+    def get_labels(self) -> tuple[str | list]:
+        output = "\n"
+        labels_names = sorted(list(set((i for j in self.data["tasks"].values() for i in j["labels"]))))
+        for idx, name in enumerate(labels_names):
+            output += f"{idx+1}. {name} | "
+        if output=="\n": return "\nThere are no labels defined. Input any number to continue"
+        return output, labels_names
+
+    def get_hash_of_task_with_index(self, idx: int, type_of_idx_with_args: list) -> str:
+        hash = ""
+        sorted_data = dict(sorted(self.data["tasks"].items(), key=lambda item: item[1]['index']))
+        match type_of_idx_with_args[0]:
             case "standard":
                 for key, values in self.data["tasks"].items():
                     if values["index"] == idx-1: return key
             case "group":
                 try:
-                    self.data["order of tasks in group"][idx-1]
+                    hash = self.data["order of tasks in group"][type_of_idx_with_args[1]][idx-1]
                 except:
                     pass
-        return ""
+            case "label":
+                try:
+                    for index, value in enumerate(i for i, j in sorted_data.items() if type_of_idx_with_args[1] in j["labels"]):
+                        if index==idx-1:
+                            hash = value
+                            break
+                except:
+                    pass
+            case "importance":
+                try:
+                    for index, value in enumerate(i for i, j in sorted_data.items() if type_of_idx_with_args[1] in j["importance"]):
+                        if index==idx-1:
+                            hash = value
+                            break
+                except:
+                    pass
+        return hash
 
     def get_longest_entry_beautified(self) -> tuple[int]:
         """
@@ -176,7 +211,7 @@ class DataManager:
             sorted_steps = dict(sorted(items[1]["steps"].items(), key=lambda item: item[1]["index"]))
             for idx_2, values in enumerate(sorted_steps.values()):
                 output.append(f"{' '*self.TAB_INDENT}{idx+1}.{idx_2+1} {values['name']}")
-                if values["description"] != "": output.append(f"{' '*self.TAB_INDENT}{values['description']}")
+                if values["description"] != "": output.extend([f"{' '*self.TAB_INDENT}{values['description']}", "\n"])
                 output.append("\n")
         return (len(output), len(max(output, key=lambda x: len(x))))
 
@@ -194,13 +229,13 @@ class DataManager:
             output.append([f"{idx+1}. {items[1]['name']} {''.join(f'[{label}]' for label in items[1]['labels'])}", items[1]["importance"]])
             # display details
             if items[0] == task_hash:
-                if items[1]["description"] != "": output.append([items[1]["description"], "None"])
+                if items[1]["description"] != "": output.extend([[items[1]["description"], "None"], ["\n", "None"]])
                 # display steps with details
                 sorted_steps = dict(sorted(items[1]["steps"].items(), key=lambda item: item[1]["index"]))
                 for idx_2, values in enumerate(sorted_steps.values()):
                     output.append([f"{' '*self.TAB_INDENT}{idx+1}.{idx_2+1} {values['name']}", values["importance"]])
                     if values["description"] != "": output.append([f"{' '*self.TAB_INDENT}{values['description']}", "None"])
-                output.append(["\n", "None"])
+                    output.append(["\n", "None"])
         return output
 
 if __name__ == "__main__":

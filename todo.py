@@ -13,7 +13,7 @@ class ScreenManager:
         self.file = file
         self.data = DataManager(self.file.data)
         self.running = True
-        self.current_order = "standard" # other would be group
+        self.current_order_with_args = ["standard"] # other would be group, label and importance
 
         # DETERMINE THE SIZE OF THE MAIN PAD
         max_dimensions = self.data.get_longest_entry_beautified()
@@ -67,7 +67,7 @@ class ScreenManager:
         self.output_text_to_window(0, self.space_footer_text(footer_text), self.window_dimensions[0][0]-1, 0)
         y, _ = self.get_coordinates_for_centered_text(headline)
         self.output_text_to_window(0, headline, 1, y, curses.A_UNDERLINE)
-        self.beautify_output(1, self.data.display_task_details(self.content), 1, 1)
+        self.beautify_output()
         while self.running:
             sleep(0.01) # so program doesn't use 100% cpu
             key=self.get_input()
@@ -107,16 +107,64 @@ class ScreenManager:
                 while not match(r"\d+", input):
                     input = self.get_input_string(wrong_input_message + instructions["show"], input_length)
                 if input=="0":
-                    self.beautify_output(1, self.data.display_task_details(self.data.get_all_data()))
+                    self.beautify_output()
                 else:
-                    task_hash = self.data.get_hash_of_task_with_index(int(input), self.current_order)
-                    self.beautify_output(1, self.data.display_task_details(self.content, task_hash))
+                    task_hash = self.data.get_hash_of_task_with_index(int(input), self.current_order_with_args)
+                    self.beautify_output(self.data.display_task_details(self.content, task_hash))
             case "A" | "a":
                 pass
             case "C" | "c":
                 pass
             case "D" | "d":
-                pass
+                input = self.get_input_string(instructions["display"]["1"], 1)
+                while not match(r"[GgLlIi0]", input):
+                    input = self.get_input_string(wrong_input_message + instructions["display"]["1"], 1)
+                match input:
+                    case "0":
+                        self.current_order_with_args = ["standard"]
+                        self.content = self.data.get_all_data()
+                        self.beautify_output()
+                    case "G" | "g":
+                        groups = self.data.get_groups()
+                        input = self.get_input_string(instructions["display"]["2"]["group"] + groups[0], 12)
+                        while not match(r"\d+", input):
+                            input = self.get_input_string(wrong_input_message + instructions["display"]["2"]["group"] + groups[0], 12)
+                        try:
+                            self.content = self.data.get_data_of_group(list(self.data.data["order of tasks in group"].keys())[int(input)-1])
+                            self.current_order_with_args = ["group", groups[1][int(input)-1]]
+                        except:
+                            pass
+                        self.beautify_output()
+                    case "L" | "l":
+                        labels = self.data.get_labels()
+                        input = self.get_input_string(instructions["display"]["2"]["label"] + labels[0], 12)
+                        while not match(r"\d+", input):
+                            input = self.get_input_string(wrong_input_message + instructions["display"]["2"]["label"] + labels, 12)
+                        try:
+                            self.content = self.data.get_data_with_label(labels[1][int(input)-1])
+                            self.current_order_with_args = ["label", labels[1][int(input)-1]]
+                        except:
+                            pass
+                        self.beautify_output()
+                    case "I" | "i":
+                        input = self.get_input_string(instructions["display"]["2"]["importance"], 1)
+                        while not match(r"[LlMmHhNn]", input):
+                            input = self.get_input_string(wrong_input_message + instructions["display"]["2"]["importance"], 1)
+                        self.current_order_with_args = ["importance"]
+                        match input:
+                            case "N" | "n":
+                                self.content = self.data.get_data_of_importance("None")
+                                self.current_order_with_args.append("None")
+                            case "L" | "l":
+                                self.content = self.data.get_data_of_importance("low")
+                                self.current_order_with_args.append("low")
+                            case "M" | "m":
+                                self.content = self.data.get_data_of_importance("medium")
+                                self.current_order_with_args.append("medium")
+                            case "H" | "h":
+                                self.content = self.data.get_data_of_importance("high")
+                                self.current_order_with_args.append("high")
+                        self.beautify_output()
             case "X" | "x":
                 pass
             # Default operations
@@ -194,9 +242,10 @@ class ScreenManager:
             start_x, start_y, end_x, end_y = self.get_coordinates_for_centered_pad(win)
             self.windows[win].refresh(self.scroll_x, self.scroll_y, start_x, start_y, end_x, end_y)
 
-    def beautify_output(self, win: int, data: list[list[str]], start_y=1, start_x=1) -> None:
-        self.windows[win].clear()
-        for line, importance in data:
+    def beautify_output(self, tasks=None, start_y=1, start_x=1) -> None:
+        if tasks is None: tasks = self.data.display_task_details(self.content)
+        self.windows[1].clear()
+        for line, importance in tasks:
             if importance != "None":
                 self.output_text_to_window(1, line, start_y, start_x, self.__dict__[f"{importance}_importance"])
             else:
