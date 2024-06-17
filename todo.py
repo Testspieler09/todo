@@ -13,7 +13,6 @@ class ScreenManager:
         self.file = file
         self.data = DataManager(self.file.data)
         self.running = True
-        self.current_order_with_args = ["standard"] # other would be group, label and importance
 
         # DETERMINE THE SIZE OF THE MAIN PAD
         max_dimensions = self.data.get_longest_entry_beautified()
@@ -41,6 +40,8 @@ class ScreenManager:
         self.active_window = 1
         self.content = self.data.get_all_data() if content==None else content
         self.content_beautified = self.data.display_task_details(self.content) if content_beautified==None else content_beautified
+        self.current_order_with_args = ["standard", self.content] # other would be group, label and importance
+        self.opened_task_hash = ""
 
         # COLOR STUFF FOR IMPORTANCE
         curses.start_color()
@@ -107,26 +108,67 @@ class ScreenManager:
                 input = self.get_input_string(instructions["show"], input_length, r"\d+")
                 if input=="0":
                     self.update_content(self.content)
+                    self.current_order_with_args = ["standard", self.content]
                     self.beautify_output()
                 else:
-                    task_hash = self.data.get_hash_of_task_with_index(int(input), self.current_order_with_args)
-                    self.update_content(self.content, task_hash)
+                    self.opened_task_hash = self.data.get_hash_of_task_with_index(int(input), self.current_order_with_args)
+                    self.update_content(self.content, self.opened_task_hash)
                     self.beautify_output()
             case "A" | "a":
                 input = self.get_input_string(instructions["add"]["1"], 1, r"[TtSs]")
                 match input.lower():
                     case "t":
-                        pass
+                        data = {}
+                        data["name"] = self.get_input_string(instructions["add"]["2"]["task"][0], 20)
+                        data["description"] = self.get_input_string(instructions["add"]["2"]["task"][1], 50)
+                        input = self.get_input_string(instructions["add"]["2"]["task"][2], 1, r"[LlMmHhNn]")
+                        match input.lower():
+                            case "n":
+                                data["importance"] = "None"
+                            case "l":
+                                data["importance"] = "low"
+                            case "m":
+                                data["importance"] = "medium"
+                            case "h":
+                                data["importance"] = "high"
+                        data["steps"] = {}
+                        #! ADDING NEW LABELS AND GROUPS SHOULD BE IMPLEMENTED
+                        labels = self.data.get_labels()
+                        index = self.get_input_string(instructions["add"]["2"]["task"][3] + labels[0], 20, r"\d+(,\s*\d)*")
+                        data["labels"] = self.get_all_possible_items(index, labels)
+                        groups = self.data.get_groups()
+                        index = self.get_input_string(instructions["add"]["2"]["task"][4] + groups[0], 20, r"\d+(,\s*\d)*")
+                        data["groups"] = self.get_all_possible_items(index, groups)
+                        self.data.modify_task(data, True)
                     case "s":
-                        pass
+                        data = {}
+                        idx = self.get_input_string(instructions["add"]["2"]["step"][0], 12, r"\d+")
+                        task_hash = self.data.get_hash_of_task_with_index(int(idx) , self.current_order_with_args)
+                        if not idx=="0" and task_hash!="":
+                            data["name"] = self.get_input_string(instructions["add"]["2"]["step"][1], 20)
+                            data["description"] = self.get_input_string(instructions["add"]["2"]["step"][2], 50)
+                            input = self.get_input_string(instructions["add"]["2"]["step"][3], 1, r"[LlMmHhNn]")
+                            match input.lower():
+                                case "n":
+                                    data["importance"] = "None"
+                                case "l":
+                                    data["importance"] = "low"
+                                case "m":
+                                    data["importance"] = "medium"
+                                case "h":
+                                    data["importance"] = "high"
+                            self.data.add_step(task_hash, data)
+                self.update_content(self.data.get_all_data(), self.opened_task_hash)
+                # Update Window dimensions of main pad before outputting new stuff
+                self.beautify_output()
             case "C" | "c":
                 pass
             case "D" | "d":
                 input = self.get_input_string(instructions["display"]["1"], 1, r"[GgLlIi0]")
                 match input.lower():
                     case "0":
-                        self.current_order_with_args = ["standard"]
                         self.update_content(self.data.get_all_data())
+                        self.current_order_with_args = ["standard", self.content]
                         self.beautify_output()
                     case "g":
                         groups = self.data.get_groups()
@@ -168,6 +210,7 @@ class ScreenManager:
                         self.current_order_with_args = ["standard", self.content]
                         self.beautify_output()
             case "X" | "x":
+                # update index of every other task auto after deletion or it will break
                 pass
             # Default operations
             case "H" | "h":
@@ -200,6 +243,17 @@ class ScreenManager:
         self.screen.keypad(False)
         curses.echo()
         curses.endwin()
+
+    @staticmethod
+    def get_all_possible_items(idx: list, items: list) -> list:
+        output = []
+        for i in idx.replace(" ", "").split(","):
+            try:
+                if int(i)==0: continue
+                output.append(items[1][int(i)-1])
+            except:
+                pass
+        return output
 
     def update_content(self, content: dict, task_hash="") -> None:
         """
@@ -266,7 +320,7 @@ class ScreenManager:
         return "\n".join(["" if i==" dbc71b7fc9e348da85ae5e095bd80855" else i for i in lines])
 
     def get_input_string(self, message: str, input_length: int, p_regex=None) -> str:
-        regex = r"[\S\s]" if p_regex==None else p_regex
+        regex = r"[\S\s]*" if p_regex==None else p_regex
         message = self.make_message_fit_width(message, self.window_dimensions[0][1]-2)
         message_is_updated = False
         while True:

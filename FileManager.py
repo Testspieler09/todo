@@ -76,15 +76,23 @@ class DataManager:
         return uuid4().hex
 
     # ADDING, CHANGING AND REMOVING DATA
-    def modify_task(self, data: dict) -> None:
-        self.data["tasks"].update(data)
+    def modify_task(self, data: dict, is_new_task=False) -> None:
+        if is_new_task:
+            id = self.gen_unique_hash()
+            data["index"] = len(self.data["tasks"])
+            self.update_groups(id, data["groups"])
+            self.data["tasks"].update({id: data})
+        else:
+            self.data["tasks"].update(data)
 
     def delete_task(self, task_hash: str) -> None:
         if task_hash not in self.data["tasks"].keys(): return
         self.data["tasks"].remove(task_hash)
 
     def add_step(self, task_hash: str, data: dict) -> None:
-        self.data["tasks"][task_hash]["steps"].update(data)
+        id = self.gen_unique_hash()
+        data["index"] = len(self.data["tasks"][task_hash]["steps"])
+        self.data["tasks"][task_hash]["steps"].update({id: data})
 
     def delete_step(self, task_hash: str, step_hash: str) -> None:
         if task_hash not in self.data["tasks"].keys(): return
@@ -126,6 +134,13 @@ class DataManager:
         for hash, value in new_order.items():
             if hash not in self.data["tasks"][task_hash].keys(): continue
             self.data["tasks"][task_hash][hash]["index"] = value
+
+    def update_groups(self, id: str, groups: list) -> None:
+        for group in groups:
+            try:
+                if not id in self.data["order of tasks in group"][group]: self.data["order of tasks in group"][group].append(id)
+            except:
+                pass
 
     # GET DATA (MAINLY FOR FILTER FUNCTION)
     def get_data_with_label(self, label: str) -> dict | None:
@@ -174,10 +189,10 @@ class DataManager:
 
     def get_hash_of_task_with_index(self, idx: int, type_of_idx_with_args: list) -> str:
         hash = ""
-        data = self.data["tasks"].items() if type_of_idx_with_args[1] == None else type_of_idx_with_args[1].items()
-        sorted_data = dict(sorted(data, key=lambda item: item[1]['index']))
         match type_of_idx_with_args[0]:
             case "standard":
+                data = self.data["tasks"].items() if type_of_idx_with_args[1] == None else type_of_idx_with_args[1].items()
+                sorted_data = dict(sorted(data, key=lambda item: item[1]['index']))
                 for index, key in enumerate(sorted_data):
                     if index == idx-1: return key
             case "group":
