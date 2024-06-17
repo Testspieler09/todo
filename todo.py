@@ -8,7 +8,7 @@ from help import footer_text, help_message, instructions, wrong_input_message
 from FileManager import FileManager, DataManager
 
 class ScreenManager:
-    def __init__(self, file: str) -> None:
+    def __init__(self, file: str, content=None, content_beautified=None) -> None:
         self.screen = curses.initscr()
         self.file = file
         self.data = DataManager(self.file.data)
@@ -39,7 +39,8 @@ class ScreenManager:
         self.main_start_x_y = (2, 0)
         self.main_end_x_y = (self.window_dimensions[0][0]-2, self.window_dimensions[0][1]-1)
         self.active_window = 1
-        self.content = self.data.get_all_data()# self.load_content(file)
+        self.content = self.data.get_all_data() if content==None else content
+        self.content_beautified = self.data.display_task_details(self.content) if content_beautified==None else content_beautified
 
         # COLOR STUFF FOR IMPORTANCE
         curses.start_color()
@@ -103,67 +104,68 @@ class ScreenManager:
             # Main operations
             case "S" | "s":
                 input_length = 12
-                input = self.get_input_string(instructions["show"], input_length)
-                while not match(r"\d+", input):
-                    input = self.get_input_string(wrong_input_message + instructions["show"], input_length)
+                input = self.get_input_string(instructions["show"], input_length, r"\d+")
                 if input=="0":
+                    self.update_content(self.content)
                     self.beautify_output()
                 else:
                     task_hash = self.data.get_hash_of_task_with_index(int(input), self.current_order_with_args)
-                    self.beautify_output(self.data.display_task_details(self.content, task_hash))
+                    self.update_content(self.content, task_hash)
+                    self.beautify_output()
             case "A" | "a":
-                pass
+                input = self.get_input_string(instructions["add"]["1"], 1, r"[TtSs]")
+                match input.lower():
+                    case "t":
+                        pass
+                    case "s":
+                        pass
             case "C" | "c":
                 pass
             case "D" | "d":
-                input = self.get_input_string(instructions["display"]["1"], 1)
-                while not match(r"[GgLlIi0]", input):
-                    input = self.get_input_string(wrong_input_message + instructions["display"]["1"], 1)
-                match input:
+                input = self.get_input_string(instructions["display"]["1"], 1, r"[GgLlIi0]")
+                match input.lower():
                     case "0":
                         self.current_order_with_args = ["standard"]
-                        self.content = self.data.get_all_data()
+                        self.update_content(self.data.get_all_data())
                         self.beautify_output()
-                    case "G" | "g":
+                    case "g":
                         groups = self.data.get_groups()
-                        input = self.get_input_string(instructions["display"]["2"]["group"] + groups[0], 12)
-                        while not match(r"\d+", input):
-                            input = self.get_input_string(wrong_input_message + instructions["display"]["2"]["group"] + groups[0], 12)
+                        input = self.get_input_string(instructions["display"]["2"]["group"] + groups[0], 12, r"\d+")
                         try:
-                            self.content = self.data.get_data_of_group(list(self.data.data["order of tasks in group"].keys())[int(input)-1])
-                            self.current_order_with_args = ["group", groups[1][int(input)-1]]
+                            if input == "0":
+                                self.update_content(self.data.get_all_tasks_without("groups"))
+                                self.current_order_with_args = ["standard", self.content]
+                            else:
+                                self.update_content(self.data.get_data_of_group(list(self.data.data["order of tasks in group"].keys())[int(input)-1]))
+                                self.current_order_with_args = ["group", groups[1][int(input)-1]]
                         except:
                             pass
                         self.beautify_output()
-                    case "L" | "l":
+                    case "l":
                         labels = self.data.get_labels()
-                        input = self.get_input_string(instructions["display"]["2"]["label"] + labels[0], 12)
-                        while not match(r"\d+", input):
-                            input = self.get_input_string(wrong_input_message + instructions["display"]["2"]["label"] + labels, 12)
+                        input = self.get_input_string(instructions["display"]["2"]["label"] + labels[0], 12, r"\d+")
                         try:
-                            self.content = self.data.get_data_with_label(labels[1][int(input)-1])
-                            self.current_order_with_args = ["label", labels[1][int(input)-1]]
+                            if input=="0":
+                                self.update_content(self.data.get_all_tasks_without("labels"))
+                                self.current_order_with_args = ["standard", self.content]
+                            else:
+                                self.update_content(self.data.get_data_with_label(labels[1][int(input)-1]))
+                                self.current_order_with_args = ["standard", self.content]
                         except:
                             pass
                         self.beautify_output()
-                    case "I" | "i":
-                        input = self.get_input_string(instructions["display"]["2"]["importance"], 1)
-                        while not match(r"[LlMmHhNn]", input):
-                            input = self.get_input_string(wrong_input_message + instructions["display"]["2"]["importance"], 1)
-                        self.current_order_with_args = ["importance"]
-                        match input:
-                            case "N" | "n":
-                                self.content = self.data.get_data_of_importance("None")
-                                self.current_order_with_args.append("None")
-                            case "L" | "l":
-                                self.content = self.data.get_data_of_importance("low")
-                                self.current_order_with_args.append("low")
-                            case "M" | "m":
-                                self.content = self.data.get_data_of_importance("medium")
-                                self.current_order_with_args.append("medium")
-                            case "H" | "h":
-                                self.content = self.data.get_data_of_importance("high")
-                                self.current_order_with_args.append("high")
+                    case "i":
+                        input = self.get_input_string(instructions["display"]["2"]["importance"], 1, r"[LlMmHhNn]")
+                        match input.lower():
+                            case "n":
+                                self.update_content(self.data.get_data_of_importance("None"))
+                            case "l":
+                                self.update_content(self.data.get_data_of_importance("low"))
+                            case "m":
+                                self.update_content(self.data.get_data_of_importance("medium"))
+                            case "h":
+                                self.update_content(self.data.get_data_of_importance("high"))
+                        self.current_order_with_args = ["standard", self.content]
                         self.beautify_output()
             case "X" | "x":
                 pass
@@ -184,7 +186,7 @@ class ScreenManager:
                 self.kill_scr()
             case "KEY_RESIZE":
                 self.kill_scr()
-                ScreenManager(self.file)
+                ScreenManager(self.file, self.content, self.content_beautified)
 
     def get_input(self) -> str:
         try:
@@ -198,6 +200,13 @@ class ScreenManager:
         self.screen.keypad(False)
         curses.echo()
         curses.endwin()
+
+    def update_content(self, content: dict, task_hash="") -> None:
+        """
+        A method that updates both content and content_beautified at the same time for the user
+        """
+        self.content = content
+        self.content_beautified = self.data.display_task_details(content, task_hash)
 
     def get_coordinates_for_centered_text(self, text: str) -> tuple[int]:
         height, width = self.window_dimensions[0]
@@ -242,10 +251,9 @@ class ScreenManager:
             start_x, start_y, end_x, end_y = self.get_coordinates_for_centered_pad(win)
             self.windows[win].refresh(self.scroll_x, self.scroll_y, start_x, start_y, end_x, end_y)
 
-    def beautify_output(self, tasks=None, start_y=1, start_x=1) -> None:
-        if tasks is None: tasks = self.data.display_task_details(self.content)
+    def beautify_output(self, start_y=1, start_x=1) -> None:
         self.windows[1].clear()
-        for line, importance in tasks:
+        for line, importance in self.content_beautified:
             if importance != "None":
                 self.output_text_to_window(1, line, start_y, start_x, self.__dict__[f"{importance}_importance"])
             else:
@@ -257,27 +265,35 @@ class ScreenManager:
         lines = [" "+j for i in paras for j in wrap(i,width)]
         return "\n".join(["" if i==" dbc71b7fc9e348da85ae5e095bd80855" else i for i in lines])
 
-    def get_input_string(self, message: str, input_length: int) -> str:
-        # Init new window and change some settings
-        win = curses.newwin(self.main_end_x_y[0]-1, self.main_end_x_y[1]+1, self.main_start_x_y[0], self.main_start_x_y[1])
-        curses.echo()
-        curses.curs_set(1)
-
-        # Output info and get input
+    def get_input_string(self, message: str, input_length: int, p_regex=None) -> str:
+        regex = r"[\S\s]" if p_regex==None else p_regex
         message = self.make_message_fit_width(message, self.window_dimensions[0][1]-2)
-        win.addstr(1, 0, message)
-        height_of_msg = len(message.splitlines())+1
-        win.box()
-        win.refresh()
-        input = win.getstr(height_of_msg, 1, input_length).decode('utf-8', 'backslashreplace')
+        message_is_updated = False
+        while True:
+            # Init new window and change some settings
+            win = curses.newwin(self.main_end_x_y[0]-1, self.main_end_x_y[1]+1, self.main_start_x_y[0], self.main_start_x_y[1])
+            curses.echo()
+            curses.curs_set(1)
 
-        # Clean up the window and settings changed
-        del win
-        curses.noecho()
-        curses.curs_set(0)
-        self.windows[1].refresh(self.scroll_x, self.scroll_y,
-                                self.main_start_x_y[0], self.main_start_x_y[1],
-                                self.main_end_x_y[0], self.main_end_x_y[1])
+            # Output info and get input
+            win.addstr(1, 0, message)
+            height_of_msg = len(message.splitlines())+1
+            win.box()
+            win.refresh()
+            input = win.getstr(height_of_msg, 1, input_length).decode('utf-8', 'backslashreplace')
+
+            # Clean up the window and settings changed
+            del win
+            curses.noecho()
+            curses.curs_set(0)
+            self.windows[1].refresh(self.scroll_x, self.scroll_y,
+                                    self.main_start_x_y[0], self.main_start_x_y[1],
+                                    self.main_end_x_y[0], self.main_end_x_y[1])
+            if match(regex, input):
+                break
+            elif not message_is_updated:
+                message_is_updated = True
+                message = wrong_input_message + message
         return input
 
 def main(cwd: str) -> None:

@@ -13,7 +13,7 @@ help_message = """
  H -> toggle this [H]elpmessage
  Q -> [Q]uit program"""
 
-wrong_input_message = "The provided input doesn't match the wanted pattern.\n\n"
+wrong_input_message = " The provided input doesn't match the wanted pattern.\n\n"
 
 footer_text = ["[H]elp", "[Q]uit"]
 
@@ -41,8 +41,8 @@ instructions = {
         "display": {
             "1": "Display Data:\nDo you want to display all tasks of a [g]roup, [l]abel or [i]mportance?\nTo disable the current filter use `0`",
             "2": {
-                "group": "Display tasks of group:\nPlease provide the number/index of the group.\n",
-                "label": "Display tasks of label:\nPlease provide the number/index of the label.\n",
+                "group": "Display tasks of group:\nPlease provide the number/index of the group.\nInput `0` for all tasks that do not belong to a group\n",
+                "label": "Display tasks of label:\nPlease provide the number/index of the label.\nInput `0` for all tasks that do not have a label\n",
                 "importance": "Display tasks of importance:\nPlease choose between [l]ow, [m]edium, [h]igh or [n]one.\n"
                 }
             }

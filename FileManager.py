@@ -134,6 +134,12 @@ class DataManager:
             if label in values["labels"]: dictionary.update({key: values})
         return dictionary
 
+    def get_all_tasks_without(self, key: str) -> dict:
+        data = {}
+        for i in self.data["tasks"].items():
+            if not i[1][key]: data.update({i[0]: i[1]})
+        return data
+
     def get_data_of_group(self, group_name: str) -> dict:
         dictionary = {}
         for key, values in self.data["tasks"].items():
@@ -168,30 +174,15 @@ class DataManager:
 
     def get_hash_of_task_with_index(self, idx: int, type_of_idx_with_args: list) -> str:
         hash = ""
-        sorted_data = dict(sorted(self.data["tasks"].items(), key=lambda item: item[1]['index']))
+        data = self.data["tasks"].items() if type_of_idx_with_args[1] == None else type_of_idx_with_args[1].items()
+        sorted_data = dict(sorted(data, key=lambda item: item[1]['index']))
         match type_of_idx_with_args[0]:
             case "standard":
-                for key, values in self.data["tasks"].items():
-                    if values["index"] == idx-1: return key
+                for index, key in enumerate(sorted_data):
+                    if index == idx-1: return key
             case "group":
                 try:
                     hash = self.data["order of tasks in group"][type_of_idx_with_args[1]][idx-1]
-                except:
-                    pass
-            case "label":
-                try:
-                    for index, value in enumerate(i for i, j in sorted_data.items() if type_of_idx_with_args[1] in j["labels"]):
-                        if index==idx-1:
-                            hash = value
-                            break
-                except:
-                    pass
-            case "importance":
-                try:
-                    for index, value in enumerate(i for i, j in sorted_data.items() if type_of_idx_with_args[1] in j["importance"]):
-                        if index==idx-1:
-                            hash = value
-                            break
                 except:
                     pass
         return hash
