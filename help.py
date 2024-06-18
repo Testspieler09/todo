@@ -37,7 +37,14 @@ INSTRUCTIONS = {
                 "step": STEP_DATA
                 }
             },
-        "delete": "Delete Data:\nWhat do you want to delete?\n[T]ask, [S]tep, [L]abel, [G]roup",
+        "delete": {
+            "1": "Delete Data:\nWhat do you want to delete?\n[T]ask, [S]tep, [L]abel, [G]roup",
+            "task": "Which task do you want to delete?\nPlease provide it's index",
+            "step": "Which step do you want to delete?\nPlease provide the index.\ne.g. `1.2` [for the second step of the first task]",
+            "label": "Which label would you like to delete?\nPlease provide the index",
+            "group": "Which group would you like to delete?\nPlease provide the index",
+            "validation": "Are you shure you want to delete it?\n[Y]es; [N]o"
+            },
         "show": "Show more details:\nPlease provide the number or index of the task you want to expand.\ne.g. `1` [for a the first task]\nTIPP: `0` -> close details of given task",
         "display": {
             "1": "Display Data:\nDo you want to display all tasks of a [G]roup, [L]abel or [I]mportance?\nTo disable the current filter use `0`",
@@ -51,6 +58,7 @@ INSTRUCTIONS = {
 
 # FIXED INPUT LENGTHS
 CHOICE_LEN = 1
+STEP_IDX_LEN = 30
 NAME_LEN = 35
 DESCRIPTION_LEN = 80
 INDEX_LEN = 12
@@ -60,6 +68,7 @@ MULTIINDEX_LEN = 40
 MULTIINDEX_REGEX = r"\d+(,\s*\d)*"
 INDEX_REGEX = r"\d+"
 NAME_REGEX = r"[\S\s]+"
+STEP_IDX_REGEX = r"\d+\.\d+"
 
 if __name__ == "__main__":
     print(HELP_MESSAGE)

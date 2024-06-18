@@ -4,7 +4,7 @@ from sys import exit
 from re import match
 from textwrap import wrap
 from os.path import exists
-from help import FOOTER_TEXT, HELP_MESSAGE, INSTRUCTIONS, WRONG_INPUT_MESSAGE, CHOICE_LEN, NAME_LEN, DESCRIPTION_LEN, INDEX_LEN, MULTIINDEX_LEN, MULTIINDEX_REGEX, INDEX_REGEX, NAME_REGEX
+from help import FOOTER_TEXT, HELP_MESSAGE, INSTRUCTIONS, WRONG_INPUT_MESSAGE, CHOICE_LEN, NAME_LEN, DESCRIPTION_LEN, INDEX_LEN, MULTIINDEX_LEN, STEP_IDX_LEN, MULTIINDEX_REGEX, INDEX_REGEX, NAME_REGEX, STEP_IDX_REGEX
 from FileManager import FileManager, DataManager
 
 class ScreenManager:
@@ -99,11 +99,11 @@ class ScreenManager:
             case "S" | "s":
                 index = self.get_input_string(INSTRUCTIONS["show"], INDEX_LEN, INDEX_REGEX)
                 if index=="0":
-                    self.update_content(self.content)
+                    self.opened_task_hash = ""
                     self.current_order_with_args = ["standard", self.content]
                 else:
                     self.opened_task_hash = self.data.get_hash_of_task_with_index(int(index), self.current_order_with_args)
-                    self.update_content(self.content, self.opened_task_hash)
+                self.update_content(self.content)
                 self.beautify_output()
             case "A" | "a":
                 input = self.get_input_string(INSTRUCTIONS["add"]["1"], CHOICE_LEN, r"[TtSs]")
@@ -160,7 +160,7 @@ class ScreenManager:
                                 case "h":
                                     data["importance"] = "high"
                             self.data.add_step(task_hash, data)
-                self.update_content(eval(self.current_filter[0])(self.current_filter[1]), self.opened_task_hash)
+                self.update_content(eval(self.current_filter[0])(self.current_filter[1]))
                 self.file.update_data(self.data.data)
                 self.update_main_dimensions()
                 self.beautify_output()
@@ -170,7 +170,7 @@ class ScreenManager:
                 input = self.get_input_string(INSTRUCTIONS["display"]["1"], CHOICE_LEN, r"[GgLlIi0]")
                 match input.lower():
                     case "0":
-                        self.filter = ["self.data.get_all_data", ()]
+                        self.current_filter = ["self.data.get_all_data", ()]
                         self.update_content(self.data.get_all_data())
                         self.current_order_with_args = ["standard", self.content]
                         self.beautify_output()
@@ -222,8 +222,33 @@ class ScreenManager:
                         self.current_order_with_args = ["standard", self.content]
                         self.beautify_output()
             case "X" | "x":
-                # update index of every other task auto after deletion or it will break
-                pass
+                data_to_delete = [] # 0 -> type, 1 -> hash (task|step) or name (label|group)
+                input = self.get_input_string(INSTRUCTIONS["delete"]["1"], CHOICE_LEN, r"[TtSsLlGg]")
+                match input.lower():
+                    case "t":
+                        index = self.get_input_string(INSTRUCTIONS["delete"]["task"], INDEX_LEN, INDEX_REGEX)
+                        data_to_delete = ["task", self.data.get_hash_of_task_with_index(int(index)-1, self.current_order_with_args)]
+                    case "s":
+                        index = self.get_input_string(INSTRUCTIONS["delete"]["step"], STEP_IDX_LEN, STEP_IDX_REGEX)
+                        data_to_delete = ["step", self.data.get_hash_of_step_with_index(index, self.current_order_with_args)]
+                    case "l":
+                        labels = self.data.get_labels()
+                        index = self.get_input_string(INSTRUCTIONS["delete"]["label"] + labels[0], INDEX_LEN, INDEX_REGEX)
+                        data_to_delete = ["label", labels[1][int(index)-1]]
+                    case "g":
+                        groups = self.data.get_groups()
+                        index = self.get_input_string(INSTRUCTIONS["delete"]["group"] + groups[0], INDEX_LEN, INDEX_REGEX)
+                        data_to_delete = ["group", groups[1][int(index)-1]]
+                input = self.get_input_string(INSTRUCTIONS["delete"]["validation"], CHOICE_LEN, r"[YyNn]")
+                match input.lower():
+                    case "y":
+                        self.data.do_deletion(data_to_delete)
+                        self.data.validata_data_and_update_necessary(data_to_delete)
+                        self.update_content(self.data.get_all_data())
+                        self.beautify_output()
+                        self.file.update_data(self.data.data)
+                    case "n":
+                        pass
             # Default operations
             case "H" | "h":
                 if self.active_window == 2:
@@ -291,12 +316,12 @@ class ScreenManager:
                 pass
         return output
 
-    def update_content(self, content: dict, task_hash="") -> None:
+    def update_content(self, content: dict) -> None:
         """
         A method that updates both content and content_beautified at the same time for the user
         """
         self.content = content
-        self.content_beautified = self.data.display_task_details(content, task_hash)
+        self.content_beautified = self.data.display_task_details(content, self.opened_task_hash)
 
     def get_coordinates_for_centered_text(self, text: str) -> tuple[int]:
         height, width = self.window_dimensions[0]
@@ -393,7 +418,8 @@ def main(cwd: str) -> None:
         file = FileManager(filepath)
     else:
         file = FileManager.for_new_file(filepath)
-    # file.write_backup()
+    # if data_is_validated:
+    #   file.write_backup()
     screen = ScreenManager(file)
     print("Do something after finishing to do manager")
     exit()
