@@ -5,11 +5,10 @@ The ToDo Manager is a minimalistic terminal based todo list, which has support f
 ## Features
 
 1. Support for groups
-    - e.g. Project 1, Projekt 2, etc
+    - e.g. Project 1, Project 2, etc
 1. Support for labels
     - e.g. bug, till tomorrow, etc
 1. Support for importance levels
-    - defaults to None if not specified
     - if terminal can display color the task will be shown in different colors based on importance
 1. Support for task steps (just 1 layer for now)
     - e.g. Big Task -> Step 1, Step 2, etc

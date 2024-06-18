@@ -1,5 +1,5 @@
 # add a manual backup maybe or backup and save on change of data (add, change, delete)
-help_message = """
+HELP_MESSAGE = """
  Key cheat sheet
  ===============
 
@@ -14,27 +14,27 @@ help_message = """
  H -> toggle this [H]elpmessage
  Q -> [Q]uit program"""
 
-wrong_input_message = " The provided input doesn't match the wanted pattern.\n\n"
+WRONG_INPUT_MESSAGE = "The provided input doesn't match the wanted pattern.\n\n"
 
-footer_text = ["[H]elp", "[Q]uit"]
+FOOTER_TEXT = ["[H]elp", "[Q]uit"]
 
-step_data = ["To which task do you want to add the task?\nPlease provide the index.\nA `0` means cancel.", "Please provide a name for this step.", "Now a description please.", "Choose an importance for the step.\n[N]one; [L]ow; [M]edium; [H]igh"]
+STEP_DATA = ["To which task do you want to add the task?\nPlease provide the index.\nA `0` means cancel.", "Please provide a name for this step.", "Now a description please.", "Choose an importance for the step.\n[N]one; [L]ow; [M]edium; [H]igh"]
 
-task_data = ["Please provide a name for this task.", "Now a description please.", "Choose an importance for the task.\n[N]one; [L]ow; [M]edium; [H]igh", "What labels should the task have?\nPlease separate them by a `,` e.g. `1, 2, 5`.\nA `0` means no label.", "What groups should the task belong to?\nPlease separate your choice by a `,` e.g. `1, 2, 5`.\nA `0` means no group."]
+TASK_DATA = ["Please provide a name for this task.", "Now a description please.", "Choose an importance for the task.\n[N]one; [L]ow; [M]edium; [H]igh", ["Do you want to add [E]xisting labels or create a [N]ew one?", "What labels should the task have?\nPlease separate them by a `,` e.g. `1, 2, 5`.\nA `0` means no label.", "Please provide a name for the new label"], ["Do you want to add [E]xisting groups or create a [N]ew one?", "What groups should the task belong to?\nPlease separate your choice by a `,` e.g. `1, 2, 5`.\nA `0` means no group.", "Please provide a name for the new label"]]
 
-instructions = {
+INSTRUCTIONS = {
         "change": {
             "1": "Change Data:\nPlease provide the number or index of the task you want to change.\ne.g. `1` [for a the first task] or `1.2` [for the second step of the first task]",
             "2": {
-                "task": task_data,
-                "step": step_data
+                "task": TASK_DATA,
+                "step": STEP_DATA
                 }
             },
         "add": {
             "1": "Add Data:\nDo you want to add a new [T]ask or [S]tep?",
             "2": {
-                "task": task_data,
-                "step": step_data
+                "task": TASK_DATA,
+                "step": STEP_DATA
                 }
             },
         "delete": "Delete Data:\nWhat do you want to delete?\n[T]ask, [S]tep, [L]abel, [G]roup",
@@ -49,5 +49,17 @@ instructions = {
             }
         }
 
+# FIXED INPUT LENGTHS
+CHOICE_LEN = 1
+NAME_LEN = 35
+DESCRIPTION_LEN = 80
+INDEX_LEN = 12
+MULTIINDEX_LEN = 40
+
+# SOME REPEATING REGEX
+MULTIINDEX_REGEX = r"\d+(,\s*\d)*"
+INDEX_REGEX = r"\d+"
+NAME_REGEX = r"[\S\s]+"
+
 if __name__ == "__main__":
-    print(help_message)
+    print(HELP_MESSAGE)

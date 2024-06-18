@@ -16,21 +16,33 @@ class FileManager:
 
     @classmethod
     def for_new_file(cls, path_with_filename_and_extension: str) -> None:
+        """
+        Alternative constructor for when the JSON file doesn't exist yet
+        """
         with open(path_with_filename_and_extension, "w") as f:
             f.write('{"order of tasks in group":{},'
                       '"tasks":{}}')
         return cls(path_with_filename_and_extension)
 
     def read_file_data(self) -> dict:
+        """
+        Read JSON file and move contents into dictionary
+        """
         with open(self.path_to_file, "r") as f:
             return load(f)
 
     def update_data(self, data: dict) -> None:
+        """
+        Overwrite old data with new data
+        """
         self.data = data
         with open(self.path_to_file, "w") as f:
             f.write(str(dumps(self.data)))
 
     def load_backup_data(self) -> None:
+        """
+        Load backup data as the dict
+        """
         with open(self.backup_path, "r") as f:
             self.data = load(f)
 
@@ -140,7 +152,7 @@ class DataManager:
             try:
                 if not id in self.data["order of tasks in group"][group]: self.data["order of tasks in group"][group].append(id)
             except:
-                pass
+                self.data["order of tasks in group"].update({group: [id]})
 
     # GET DATA (MAINLY FOR FILTER FUNCTION)
     def get_data_with_label(self, label: str) -> dict | None:
