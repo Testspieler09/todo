@@ -39,6 +39,10 @@ class FileManager:
         with open(self.path_to_file, "w") as f:
             f.write(str(dumps(self.data)))
 
+    def write_backup(self) -> None:
+        with open(self.backup_path, "w") as f:
+            f.write(str(dumps(self.data)))
+
     def load_backup_data(self) -> None:
         """
         Load backup data as the dict
@@ -49,10 +53,6 @@ class FileManager:
     def overwrite_main_data_with_backup(self) -> None:
         with open(self.backup_path, "r") as f:
             update_data(load(f))
-
-    def write_backup(self) -> None:
-        with open(self.backup_path, "w") as f:
-            f.write(str(dumps(self.data)))
 
 class DataManager:
     """
@@ -97,6 +97,39 @@ class DataManager:
         else:
             self.data["tasks"].update(data)
 
+    def add_step(self, task_hash: str, data: dict) -> None:
+        id = self.gen_unique_hash()
+        data["index"] = len(self.data["tasks"][task_hash]["steps"])
+        self.data["tasks"][task_hash]["steps"].update({id: data})
+
+    def add_label(self, task_hash: str, label: str) -> None:
+        if task_hash not in self.data["tasks"].keys(): return
+        self.data["tasks"][task_hash]["labels"].append(label)
+
+    def change_data_step(self, task_hash: str, data: dict) -> None:
+        if task_hash not in self.data["tasks"].keys(): return
+        self.data["tasks"][task_hash].update(data)
+
+    def change_importance(self, task_hash, importance: str | None) -> None:
+        if task_hash not in self.data["tasks"].keys(): return
+        self.data["tasks"][task_hash].update({"importance": importance})
+
+    def change_global_order_of_tasks(self, new_order: dict) -> None:
+        # new order consist of task_hash: number
+        for hash, value in new_order.items():
+            if hash not in self.data["tasks"].keys(): continue
+            self.data["tasks"][hash]["index"] = value
+
+    def change_order_of_steps(self, task_hash: str, new_order: dict) -> None:
+        if task_hash not in self.data["tasks"].keys(): return
+        for hash, value in new_order.items():
+            if hash not in self.data["tasks"][task_hash].keys(): continue
+            self.data["tasks"][task_hash][hash]["index"] = value
+
+    def change_group_order_of_tasks(self, group_name: str, order: list[str]) -> None:
+        if group_name not in self.data["order of tasks in group"]: return
+        self.data["order of tasks in group"][group_name] = order
+
     def do_deletion(self, data_to_delete: list) -> None:
         match data_to_delete[0]:
             case "task":
@@ -112,58 +145,14 @@ class DataManager:
         if task_hash not in self.data["tasks"].keys(): return
         del self.data["tasks"][task_hash]
 
-    def add_step(self, task_hash: str, data: dict) -> None:
-        id = self.gen_unique_hash()
-        data["index"] = len(self.data["tasks"][task_hash]["steps"])
-        self.data["tasks"][task_hash]["steps"].update({id: data})
-
     def delete_step(self, task_hash: str, step_hash: str) -> None:
         if task_hash not in self.data["tasks"].keys(): return
         if step_hash not in self.data["tasks"][task_hash]["steps"].keys(): return
         del self.data["tasks"][task_hash]["steps"][step_hash]
 
-    def change_data_step(self, task_hash: str, data: dict) -> None:
-        if task_hash not in self.data["tasks"].keys(): return
-        self.data["tasks"][task_hash].update(data)
-
-    def add_label(self, task_hash: str, label: str) -> None:
-        if task_hash not in self.data["tasks"].keys(): return
-        self.data["tasks"][task_hash]["labels"].append(label)
-
-    def delete_task_hash_from_label(self, task_hash: str, label: str) -> None:
-        if label not in self.data["labels"].keys(): return
-        self.data["labels"][label].remove(task_hash)
-
     def delete_label(self, label: str) -> None:
         for value in self.data["tasks"].values():
             if label in value["labels"]: value["labels"].remove(label)
-
-    def change_importance(self, task_hash, importance: str | None) -> None:
-        if task_hash not in self.data["tasks"].keys(): return
-        self.data["tasks"][task_hash].update({"importance": importance})
-
-    def change_global_order_of_tasks(self, new_order: dict) -> None:
-        # new order consist of task_hash: number
-        for hash, value in new_order.items():
-            if hash not in self.data["tasks"].keys(): continue
-            self.data["tasks"][hash]["index"] = value
-
-    def change_group_order_of_tasks(self, group_name: str, order: list[str]) -> None:
-        if group_name not in self.data["order of tasks in group"]: return
-        self.data["order of tasks in group"][group_name] = order
-
-    def change_order_of_steps(self, task_hash: str, new_order: dict) -> None:
-        if task_hash not in self.data["tasks"].keys(): return
-        for hash, value in new_order.items():
-            if hash not in self.data["tasks"][task_hash].keys(): continue
-            self.data["tasks"][task_hash][hash]["index"] = value
-
-    def update_groups(self, id: str, groups: list) -> None:
-        for group in groups:
-            try:
-                if not id in self.data["order of tasks in group"][group]: self.data["order of tasks in group"][group].append(id)
-            except:
-                self.data["order of tasks in group"].update({group: [id]})
 
     def delete_group(self, group_name: str) -> None:
         hashes = self.data["order of tasks in group"].pop(group_name, None)
@@ -172,49 +161,11 @@ class DataManager:
             self.data["tasks"][hash]["groups"].remove(group_name)
 
     # GET DATA (MAINLY FOR FILTER FUNCTION)
-    def get_data_with_label(self, label: str) -> dict | None:
-        dictionary = {}
-        for key, values in self.data["tasks"].items():
-            if label in values["labels"]: dictionary.update({key: values})
-        return dictionary
-
     def get_all_tasks_without(self, key: str) -> dict:
         data = {}
         for i in self.data["tasks"].items():
             if not i[1][key]: data.update({i[0]: i[1]})
         return data
-
-    def get_data_of_group(self, group_name: str) -> dict:
-        dictionary = {}
-        for key, values in self.data["tasks"].items():
-            if group_name in values["groups"]: dictionary.update({key: values})
-        return dictionary
-
-    def get_data_of_importance(self, importance_lvl: str) -> dict:
-        dictionary = {}
-        for key, values in self.data["tasks"].items():
-            if values["importance"] == importance_lvl: dictionary.update({key: values})
-        return dictionary
-
-    def get_all_data(self, *args, **kwargs) -> dict:
-        return self.data["tasks"]
-
-    def get_groups(self) -> str:
-        group_names = "\n"
-        list_of_groups = []
-        for idx, name in enumerate(self.data["order of tasks in group"].keys()):
-            group_names += f"{idx+1}. {name} | "
-            list_of_groups.append(name)
-        if group_names=="\n": return "\nThere are no groups defined. Input any number to continue."
-        return group_names, list_of_groups
-
-    def get_labels(self) -> tuple[str | list]:
-        output = "\n"
-        labels_names = sorted(list(set((i for j in self.data["tasks"].values() for i in j["labels"]))))
-        for idx, name in enumerate(labels_names):
-            output += f"{idx+1}. {name} | "
-        if output=="\n": return "\nThere are no labels defined. Input any number to continue"
-        return output, labels_names
 
     def get_hash_of_task_with_index(self, idx: int, type_of_idx_with_args: list) -> str:
         hash = ""
@@ -241,24 +192,43 @@ class DataManager:
             if idx == int(step_idx)-1: step_hash = step
         return (task_hash, step_hash)
 
-    def get_longest_entry_beautified(self) -> tuple[int]:
-        """
-        Function returns the length of the longest beautified entry
-        """
-        output = []
-        # generate all outputs for all step hashes and determine the max len and height than
-        data = dict(sorted(self.data["tasks"].items(), key=lambda item: item[1]['index']))
-        for idx, items in enumerate(data.items()):
-            output.append(f"{idx+1}. {items[1]['name']} {''.join(f'[{label}]' for label in items[1]['labels'])}")
-            # display details
-            if items[1]["description"] != "": output.append(items[1]["description"])
-            # display steps with details
-            sorted_steps = dict(sorted(items[1]["steps"].items(), key=lambda item: item[1]["index"]))
-            for idx_2, values in enumerate(sorted_steps.values()):
-                output.append(f"{' '*self.TAB_INDENT}{idx+1}.{idx_2+1} {values['name']}")
-                if values["description"] != "": output.extend([f"{' '*self.TAB_INDENT}{values['description']}", "\n"])
-                output.append("\n")
-        return (len(output), len(max(output, key=lambda x: len(x))))
+    def get_labels(self) -> tuple[str | list]:
+        output = "\n"
+        labels_names = sorted(list(set((i for j in self.data["tasks"].values() for i in j["labels"]))))
+        for idx, name in enumerate(labels_names):
+            output += f"{idx+1}. {name} | "
+        if output=="\n": return "\nThere are no labels defined. Input any number to continue"
+        return output, labels_names
+
+    def get_data_with_label(self, label: str) -> dict | None:
+        dictionary = {}
+        for key, values in self.data["tasks"].items():
+            if label in values["labels"]: dictionary.update({key: values})
+        return dictionary
+
+    def get_groups(self) -> str:
+        group_names = "\n"
+        list_of_groups = []
+        for idx, name in enumerate(self.data["order of tasks in group"].keys()):
+            group_names += f"{idx+1}. {name} | "
+            list_of_groups.append(name)
+        if group_names=="\n": return "\nThere are no groups defined. Input any number to continue."
+        return group_names, list_of_groups
+
+    def get_data_of_group(self, group_name: str) -> dict:
+        dictionary = {}
+        for key, values in self.data["tasks"].items():
+            if group_name in values["groups"]: dictionary.update({key: values})
+        return dictionary
+
+    def get_data_of_importance(self, importance_lvl: str) -> dict:
+        dictionary = {}
+        for key, values in self.data["tasks"].items():
+            if values["importance"] == importance_lvl: dictionary.update({key: values})
+        return dictionary
+
+    def get_all_data(self, *args, **kwargs) -> dict:
+        return self.data["tasks"]
 
     # Beautify Data for display purposes
     def display_task_details(self, data: dict, task_hash="") -> str:
@@ -283,8 +253,37 @@ class DataManager:
                     output.append(["\n", "None"])
         return output
 
-    # Validation funcs e.g. for index (must be continues) -> 1,2,3 not 1, 3, 4
+    def get_longest_entry_beautified(self) -> tuple[int]:
+        """
+        Function returns the length of the longest beautified entry
+        """
+        output = []
+        # generate all outputs for all step hashes and determine the max len and height than
+        data = dict(sorted(self.data["tasks"].items(), key=lambda item: item[1]['index']))
+        for idx, items in enumerate(data.items()):
+            output.append(f"{idx+1}. {items[1]['name']} {''.join(f'[{label}]' for label in items[1]['labels'])}")
+            # display details
+            if items[1]["description"] != "": output.append(items[1]["description"])
+            # display steps with details
+            sorted_steps = dict(sorted(items[1]["steps"].items(), key=lambda item: item[1]["index"]))
+            for idx_2, values in enumerate(sorted_steps.values()):
+                output.append(f"{' '*self.TAB_INDENT}{idx+1}.{idx_2+1} {values['name']}")
+                if values["description"] != "": output.extend([f"{' '*self.TAB_INDENT}{values['description']}", "\n"])
+                output.append("\n")
+        return (len(output), len(max(output, key=lambda x: len(x))))
+
+    # Update and validate data automaticly
+    def update_groups(self, id: str, groups: list) -> None:
+        for group in groups:
+            try:
+                if not id in self.data["order of tasks in group"][group]: self.data["order of tasks in group"][group].append(id)
+            except:
+                self.data["order of tasks in group"].update({group: [id]})
+
     def validata_data_and_update_necessary(self, type_of_deletion_with_args: list[str]) -> None:
+        """
+        Currently only makes the index is continues to avoid problems
+        """
         match type_of_deletion_with_args[0]:
             case "task":
                 sorted_data = dict(sorted(self.data["tasks"].items(), key=lambda item: item[1]["index"]))

@@ -97,158 +97,15 @@ class ScreenManager:
                 self.scroll_pad(self.active_window)
             # Main operations
             case "S" | "s":
-                index = self.get_input_string(INSTRUCTIONS["show"], INDEX_LEN, INDEX_REGEX)
-                if index=="0":
-                    self.opened_task_hash = ""
-                    self.current_order_with_args = ["standard", self.content]
-                else:
-                    self.opened_task_hash = self.data.get_hash_of_task_with_index(int(index), self.current_order_with_args)
-                self.update_content(self.content)
-                self.beautify_output()
+                self.show_procedure()
             case "A" | "a":
-                input = self.get_input_string(INSTRUCTIONS["add"]["1"], CHOICE_LEN, r"[TtSs]")
-                match input.lower():
-                    case "t":
-                        data = {}
-                        data["name"] = self.get_input_string(INSTRUCTIONS["add"]["2"]["task"][0], NAME_LEN, NAME_REGEX)
-                        data["description"] = self.get_input_string(INSTRUCTIONS["add"]["2"]["task"][1], DESCRIPTION_LEN)
-                        input = self.get_input_string(INSTRUCTIONS["add"]["2"]["task"][2], CHOICE_LEN, r"[LlMmHhNn]")
-                        match input.lower():
-                            case "n":
-                                data["importance"] = "None"
-                            case "l":
-                                data["importance"] = "low"
-                            case "m":
-                                data["importance"] = "medium"
-                            case "h":
-                                data["importance"] = "high"
-                        data["steps"] = {}
-                        input = self.get_input_string(INSTRUCTIONS["add"]["2"]["task"][3][0], CHOICE_LEN, r"[EeNn]")
-                        match input.lower():
-                            case "e":
-                                labels = self.data.get_labels()
-                                index = self.get_input_string(INSTRUCTIONS["add"]["2"]["task"][3][1] + labels[0], MULTIINDEX_LEN, MULTIINDEX_REGEX)
-                                data["labels"] = self.get_all_possible_items(index, labels)
-                            case "n":
-                                name = self.get_input_string(INSTRUCTIONS["add"]["2"]["task"][3][2], NAME_LEN, NAME_REGEX)
-                                data["labels"] = [name]
-                        input = self.get_input_string(INSTRUCTIONS["add"]["2"]["task"][4][0], CHOICE_LEN, r"[EeNn]")
-                        match input.lower():
-                            case "e":
-                                groups = self.data.get_groups()
-                                index = self.get_input_string(INSTRUCTIONS["add"]["2"]["task"][4][1] + groups[0], MULTIINDEX_LEN, MULTIINDEX_REGEX)
-                                data["groups"] = self.get_all_possible_items(index, groups)
-                            case "n":
-                                name = self.get_input_string(INSTRUCTIONS["add"]["2"]["task"][4][2], NAME_LEN, NAME_REGEX)
-                                data["groups"] = [name]
-                        self.data.modify_task(data, True)
-                    case "s":
-                        data = {}
-                        idx = self.get_input_string(INSTRUCTIONS["add"]["2"]["step"][0], INDEX_LEN, INDEX_REGEX)
-                        task_hash = self.data.get_hash_of_task_with_index(int(idx) , self.current_order_with_args)
-                        if not idx=="0" and task_hash!="":
-                            data["name"] = self.get_input_string(INSTRUCTIONS["add"]["2"]["step"][1], NAME_LEN, NAME_REGEX)
-                            data["description"] = self.get_input_string(INSTRUCTIONS["add"]["2"]["step"][2], DESCRIPTION_LEN)
-                            input = self.get_input_string(INSTRUCTIONS["add"]["2"]["step"][3], CHOICE_LEN, r"[LlMmHhNn]")
-                            match input.lower():
-                                case "n":
-                                    data["importance"] = "None"
-                                case "l":
-                                    data["importance"] = "low"
-                                case "m":
-                                    data["importance"] = "medium"
-                                case "h":
-                                    data["importance"] = "high"
-                            self.data.add_step(task_hash, data)
-                self.update_content(eval(self.current_filter[0])(self.current_filter[1]))
-                self.file.update_data(self.data.data)
-                self.update_main_dimensions()
-                self.beautify_output()
+                self.add_procedure()
             case "C" | "c":
-                pass
+                self.change_procedure()
             case "D" | "d":
-                input = self.get_input_string(INSTRUCTIONS["display"]["1"], CHOICE_LEN, r"[GgLlIi0]")
-                match input.lower():
-                    case "0":
-                        self.current_filter = ["self.data.get_all_data", ()]
-                        self.update_content(self.data.get_all_data())
-                        self.current_order_with_args = ["standard", self.content]
-                        self.beautify_output()
-                    case "g":
-                        groups = self.data.get_groups()
-                        index = self.get_input_string(INSTRUCTIONS["display"]["2"]["group"] + groups[0], INDEX_LEN, INDEX_REGEX)
-                        try:
-                            if index == "0":
-                                self.current_filter = ["self.data.get_all_tasks_without", ("groups")]
-                                self.update_content(self.data.get_all_tasks_without("groups"))
-                                self.current_order_with_args = ["standard", self.content]
-                            else:
-                                self.current_filter = ["self.data.get_data_of_group", (list(self.data.data["order of tasks in group"].keys())[int(index)-1])]
-                                self.update_content(self.data.get_data_of_group(list(self.data.data["order of tasks in group"].keys())[int(index)-1]))
-                                self.current_order_with_args = ["group", groups[1][int(index)-1]]
-                        except:
-                            pass
-                        self.beautify_output()
-                    case "l":
-                        labels = self.data.get_labels()
-                        index = self.get_input_string(INSTRUCTIONS["display"]["2"]["label"] + labels[0], INDEX_LEN, INDEX_REGEX)
-                        try:
-                            if index == "0":
-                                self.current_filter = ["self.data.get_all_tasks_without", ("labels")]
-                                self.update_content(self.data.get_all_tasks_without("labels"))
-                                self.current_order_with_args = ["standard", self.content]
-                            else:
-                                self.current_filter = ["self.data.get_data_with_label", (labels[1][int(index)-1])]
-                                self.update_content(self.data.get_data_with_label(labels[1][int(index)-1]))
-                                self.current_order_with_args = ["standard", self.content]
-                        except:
-                            pass
-                        self.beautify_output()
-                    case "i":
-                        input = self.get_input_string(INSTRUCTIONS["display"]["2"]["importance"], CHOICE_LEN, r"[LlMmHhNn]")
-                        match input.lower():
-                            case "n":
-                                self.current_filter = ["self.data.get_data_of_importance", ("None")]
-                                self.update_content(self.data.get_data_of_importance("None"))
-                            case "l":
-                                self.current_filter = ["self.data.get_data_of_importance", ("low")]
-                                self.update_content(self.data.get_data_of_importance("low"))
-                            case "m":
-                                self.current_filter = ["self.data.get_data_of_importance", ("medium")]
-                                self.update_content(self.data.get_data_of_importance("medium"))
-                            case "h":
-                                self.current_filter = ["self.data.get_data_of_importance", ("high")]
-                                self.update_content(self.data.get_data_of_importance("high"))
-                        self.current_order_with_args = ["standard", self.content]
-                        self.beautify_output()
+                self.display_procedure()
             case "X" | "x":
-                data_to_delete = [] # 0 -> type, 1 -> hash (task|step) or name (label|group)
-                input = self.get_input_string(INSTRUCTIONS["delete"]["1"], CHOICE_LEN, r"[TtSsLlGg]")
-                match input.lower():
-                    case "t":
-                        index = self.get_input_string(INSTRUCTIONS["delete"]["task"], INDEX_LEN, INDEX_REGEX)
-                        data_to_delete = ["task", self.data.get_hash_of_task_with_index(int(index)-1, self.current_order_with_args)]
-                    case "s":
-                        index = self.get_input_string(INSTRUCTIONS["delete"]["step"], STEP_IDX_LEN, STEP_IDX_REGEX)
-                        data_to_delete = ["step", self.data.get_hash_of_step_with_index(index, self.current_order_with_args)]
-                    case "l":
-                        labels = self.data.get_labels()
-                        index = self.get_input_string(INSTRUCTIONS["delete"]["label"] + labels[0], INDEX_LEN, INDEX_REGEX)
-                        data_to_delete = ["label", labels[1][int(index)-1]]
-                    case "g":
-                        groups = self.data.get_groups()
-                        index = self.get_input_string(INSTRUCTIONS["delete"]["group"] + groups[0], INDEX_LEN, INDEX_REGEX)
-                        data_to_delete = ["group", groups[1][int(index)-1]]
-                input = self.get_input_string(INSTRUCTIONS["delete"]["validation"], CHOICE_LEN, r"[YyNn]")
-                match input.lower():
-                    case "y":
-                        self.data.do_deletion(data_to_delete)
-                        self.data.validata_data_and_update_necessary(data_to_delete)
-                        self.update_content(self.data.get_all_data())
-                        self.beautify_output()
-                        self.file.update_data(self.data.data)
-                    case "n":
-                        pass
+                self.delete_procedure()
             # Default operations
             case "H" | "h":
                 if self.active_window == 2:
@@ -269,11 +126,201 @@ class ScreenManager:
                 self.kill_scr()
                 ScreenManager(self.file, self.content, self.content_beautified)
 
+    def show_procedure(self) -> None:
+        index = self.get_input_string(INSTRUCTIONS["show"], INDEX_LEN, INDEX_REGEX)
+        if index=="0":
+            self.opened_task_hash = ""
+            self.current_order_with_args = ["standard", self.content]
+        else:
+            self.opened_task_hash = self.data.get_hash_of_task_with_index(int(index), self.current_order_with_args)
+        self.update_content(self.content)
+        self.beautify_output()
+
+    def add_procedure(self) -> None:
+        input = self.get_input_string(INSTRUCTIONS["add"]["1"], CHOICE_LEN, r"[TtSs]")
+        match input.lower():
+            case "t":
+                data = {}
+                data["name"] = self.get_input_string(INSTRUCTIONS["add"]["2"]["task"][0], NAME_LEN, NAME_REGEX)
+                data["description"] = self.get_input_string(INSTRUCTIONS["add"]["2"]["task"][1], DESCRIPTION_LEN)
+                input = self.get_input_string(INSTRUCTIONS["add"]["2"]["task"][2], CHOICE_LEN, r"[LlMmHhNn]")
+                match input.lower():
+                    case "n":
+                        data["importance"] = "None"
+                    case "l":
+                        data["importance"] = "low"
+                    case "m":
+                        data["importance"] = "medium"
+                    case "h":
+                        data["importance"] = "high"
+                data["steps"] = {}
+                input = self.get_input_string(INSTRUCTIONS["add"]["2"]["task"][3][0], CHOICE_LEN, r"[EeNn]")
+                match input.lower():
+                    case "e":
+                        labels = self.data.get_labels()
+                        index = self.get_input_string(INSTRUCTIONS["add"]["2"]["task"][3][1] + labels[0], MULTIINDEX_LEN, MULTIINDEX_REGEX)
+                        data["labels"] = self.get_all_possible_items(index, labels)
+                    case "n":
+                        name = self.get_input_string(INSTRUCTIONS["add"]["2"]["task"][3][2], NAME_LEN, NAME_REGEX)
+                        data["labels"] = [name]
+                input = self.get_input_string(INSTRUCTIONS["add"]["2"]["task"][4][0], CHOICE_LEN, r"[EeNn]")
+                match input.lower():
+                    case "e":
+                        groups = self.data.get_groups()
+                        index = self.get_input_string(INSTRUCTIONS["add"]["2"]["task"][4][1] + groups[0], MULTIINDEX_LEN, MULTIINDEX_REGEX)
+                        data["groups"] = self.get_all_possible_items(index, groups)
+                    case "n":
+                        name = self.get_input_string(INSTRUCTIONS["add"]["2"]["task"][4][2], NAME_LEN, NAME_REGEX)
+                        data["groups"] = [name]
+                self.data.modify_task(data, True)
+            case "s":
+                data = {}
+                idx = self.get_input_string(INSTRUCTIONS["add"]["2"]["step"][0], INDEX_LEN, INDEX_REGEX)
+                task_hash = self.data.get_hash_of_task_with_index(int(idx) , self.current_order_with_args)
+                if not idx=="0" and task_hash!="":
+                    data["name"] = self.get_input_string(INSTRUCTIONS["add"]["2"]["step"][1], NAME_LEN, NAME_REGEX)
+                    data["description"] = self.get_input_string(INSTRUCTIONS["add"]["2"]["step"][2], DESCRIPTION_LEN)
+                    input = self.get_input_string(INSTRUCTIONS["add"]["2"]["step"][3], CHOICE_LEN, r"[LlMmHhNn]")
+                    match input.lower():
+                        case "n":
+                            data["importance"] = "None"
+                        case "l":
+                            data["importance"] = "low"
+                        case "m":
+                            data["importance"] = "medium"
+                        case "h":
+                            data["importance"] = "high"
+                    self.data.add_step(task_hash, data)
+        self.update_content(eval(self.current_filter[0])(self.current_filter[1]))
+        self.file.update_data(self.data.data)
+        self.update_main_dimensions()
+        self.beautify_output()
+
+    def change_procedure(self) -> None:
+        pass
+
+    def display_procedure(self) -> None:
+        input = self.get_input_string(INSTRUCTIONS["display"]["1"], CHOICE_LEN, r"[GgLlIi0]")
+        match input.lower():
+            case "0":
+                self.current_filter = ["self.data.get_all_data", ()]
+                self.update_content(self.data.get_all_data())
+                self.current_order_with_args = ["standard", self.content]
+                self.beautify_output()
+            case "g":
+                groups = self.data.get_groups()
+                index = self.get_input_string(INSTRUCTIONS["display"]["2"]["group"] + groups[0], INDEX_LEN, INDEX_REGEX)
+                try:
+                    if index == "0":
+                        self.current_filter = ["self.data.get_all_tasks_without", ("groups")]
+                        self.update_content(self.data.get_all_tasks_without("groups"))
+                        self.current_order_with_args = ["standard", self.content]
+                    else:
+                        self.current_filter = ["self.data.get_data_of_group", (list(self.data.data["order of tasks in group"].keys())[int(index)-1])]
+                        self.update_content(self.data.get_data_of_group(list(self.data.data["order of tasks in group"].keys())[int(index)-1]))
+                        self.current_order_with_args = ["group", groups[1][int(index)-1]]
+                except:
+                    pass
+                self.beautify_output()
+            case "l":
+                labels = self.data.get_labels()
+                index = self.get_input_string(INSTRUCTIONS["display"]["2"]["label"] + labels[0], INDEX_LEN, INDEX_REGEX)
+                try:
+                    if index == "0":
+                        self.current_filter = ["self.data.get_all_tasks_without", ("labels")]
+                        self.update_content(self.data.get_all_tasks_without("labels"))
+                        self.current_order_with_args = ["standard", self.content]
+                    else:
+                        self.current_filter = ["self.data.get_data_with_label", (labels[1][int(index)-1])]
+                        self.update_content(self.data.get_data_with_label(labels[1][int(index)-1]))
+                        self.current_order_with_args = ["standard", self.content]
+                except:
+                    pass
+                self.beautify_output()
+            case "i":
+                input = self.get_input_string(INSTRUCTIONS["display"]["2"]["importance"], CHOICE_LEN, r"[LlMmHhNn]")
+                match input.lower():
+                    case "n":
+                        self.current_filter = ["self.data.get_data_of_importance", ("None")]
+                        self.update_content(self.data.get_data_of_importance("None"))
+                    case "l":
+                        self.current_filter = ["self.data.get_data_of_importance", ("low")]
+                        self.update_content(self.data.get_data_of_importance("low"))
+                    case "m":
+                        self.current_filter = ["self.data.get_data_of_importance", ("medium")]
+                        self.update_content(self.data.get_data_of_importance("medium"))
+                    case "h":
+                        self.current_filter = ["self.data.get_data_of_importance", ("high")]
+                        self.update_content(self.data.get_data_of_importance("high"))
+                self.current_order_with_args = ["standard", self.content]
+                self.beautify_output()
+
+    def delete_procedure(self) -> None:
+        data_to_delete = [] # 0 -> type, 1 -> hash (task|step) or name (label|group)
+        input = self.get_input_string(INSTRUCTIONS["delete"]["1"], CHOICE_LEN, r"[TtSsLlGg]")
+        match input.lower():
+            case "t":
+                index = self.get_input_string(INSTRUCTIONS["delete"]["task"], INDEX_LEN, INDEX_REGEX)
+                data_to_delete = ["task", self.data.get_hash_of_task_with_index(int(index)-1, self.current_order_with_args)]
+            case "s":
+                index = self.get_input_string(INSTRUCTIONS["delete"]["step"], STEP_IDX_LEN, STEP_IDX_REGEX)
+                data_to_delete = ["step", self.data.get_hash_of_step_with_index(index, self.current_order_with_args)]
+            case "l":
+                labels = self.data.get_labels()
+                index = self.get_input_string(INSTRUCTIONS["delete"]["label"] + labels[0], INDEX_LEN, INDEX_REGEX)
+                data_to_delete = ["label", labels[1][int(index)-1]]
+            case "g":
+                groups = self.data.get_groups()
+                index = self.get_input_string(INSTRUCTIONS["delete"]["group"] + groups[0], INDEX_LEN, INDEX_REGEX)
+                data_to_delete = ["group", groups[1][int(index)-1]]
+        input = self.get_input_string(INSTRUCTIONS["delete"]["validation"], CHOICE_LEN, r"[YyNn]")
+        match input.lower():
+            case "y":
+                self.data.do_deletion(data_to_delete)
+                self.data.validata_data_and_update_necessary(data_to_delete)
+                self.update_content(self.data.get_all_data())
+                self.beautify_output()
+                self.file.update_data(self.data.data)
+            case "n":
+                pass
+
     def get_input(self) -> str:
         try:
             return self.screen.getkey()
         except:
             return None
+
+    def get_input_string(self, p_message: str, input_length: int, p_regex=None) -> str:
+        regex = r"[\S\s]*" if p_regex==None else p_regex
+        message = self.make_message_fit_width(p_message, self.window_dimensions[0][1]-2)
+        height_of_msg = len(message.splitlines())+1
+        message_is_updated = False
+        while True:
+            # Init new window and change some settings
+            win = curses.newwin(self.main_end_x_y[0]-1, self.main_end_x_y[1]+1, self.main_start_x_y[0], self.main_start_x_y[1])
+            curses.echo()
+            curses.curs_set(1)
+
+            # Output info and get input
+            win.addstr(1, 0, message)
+            win.box()
+            win.refresh()
+            input = win.getstr(height_of_msg, 1, input_length).decode('utf-8', 'backslashreplace')
+
+            # Clean up the window and settings changed
+            del win
+            curses.noecho()
+            curses.curs_set(0)
+            self.windows[1].refresh(self.scroll_x, self.scroll_y,
+                                    self.main_start_x_y[0], self.main_start_x_y[1],
+                                    self.main_end_x_y[0], self.main_end_x_y[1])
+            if match(regex, input):
+                break
+            elif not message_is_updated:
+                message_is_updated = True
+                message = self.make_message_fit_width(WRONG_INPUT_MESSAGE + p_message, self.window_dimensions[0][1]-2)
+                height_of_msg = len(message.splitlines())+1
+        return input
 
     def kill_scr(self) -> None:
         self.running = False
@@ -282,6 +329,22 @@ class ScreenManager:
         curses.echo()
         curses.endwin()
 
+    # Update attributes automaticly
+    def update_main_dimensions(self) -> None:
+        y, x = self.get_main_dimensions()
+        del self.window_dimensions[1]
+        self.window_dimensions.insert(1, (y, x))
+        del self.windows[1]
+        self.windows.insert(1, curses.newpad(self.window_dimensions[1][0], self.window_dimensions[1][1]))
+
+    def update_content(self, content: dict) -> None:
+        """
+        A method that updates both content and content_beautified at the same time for the user
+        """
+        self.content = content
+        self.content_beautified = self.data.display_task_details(content, self.opened_task_hash)
+
+    # Some getter methods
     def get_main_dimensions(self) -> tuple:
         try:
             max_dimensions = self.data.get_longest_entry_beautified()
@@ -298,13 +361,6 @@ class ScreenManager:
             x = self.screen.getmaxyx()[1]
         return y, x
 
-    def update_main_dimensions(self) -> None:
-        y, x = self.get_main_dimensions()
-        del self.window_dimensions[1]
-        self.window_dimensions.insert(1, (y, x))
-        del self.windows[1]
-        self.windows.insert(1, curses.newpad(self.window_dimensions[1][0], self.window_dimensions[1][1]))
-
     @staticmethod
     def get_all_possible_items(idx: list, items: list) -> list:
         output = []
@@ -315,13 +371,6 @@ class ScreenManager:
             except:
                 pass
         return output
-
-    def update_content(self, content: dict) -> None:
-        """
-        A method that updates both content and content_beautified at the same time for the user
-        """
-        self.content = content
-        self.content_beautified = self.data.display_task_details(content, self.opened_task_hash)
 
     def get_coordinates_for_centered_text(self, text: str) -> tuple[int]:
         height, width = self.window_dimensions[0]
@@ -345,6 +394,7 @@ class ScreenManager:
         start_coords.extend(end_coords)
         return start_coords
 
+    # Text manipulation and output methods
     def space_footer_text(self, footer_text: list) -> str:
         char_amount = len("".join(footer_text))
         width = (self.window_dimensions[0][1]-1 - char_amount) // (len(footer_text) - 1)
@@ -379,38 +429,6 @@ class ScreenManager:
         paras = ["dbc71b7fc9e348da85ae5e095bd80855" if i == "" else i for i in message.splitlines()] # using a uuid4 here to preserve the custom linespacing via `\n`
         lines = [" "+j for i in paras for j in wrap(i,width)]
         return "\n".join(["" if i==" dbc71b7fc9e348da85ae5e095bd80855" else i for i in lines])
-
-    def get_input_string(self, p_message: str, input_length: int, p_regex=None) -> str:
-        regex = r"[\S\s]*" if p_regex==None else p_regex
-        message = self.make_message_fit_width(p_message, self.window_dimensions[0][1]-2)
-        height_of_msg = len(message.splitlines())+1
-        message_is_updated = False
-        while True:
-            # Init new window and change some settings
-            win = curses.newwin(self.main_end_x_y[0]-1, self.main_end_x_y[1]+1, self.main_start_x_y[0], self.main_start_x_y[1])
-            curses.echo()
-            curses.curs_set(1)
-
-            # Output info and get input
-            win.addstr(1, 0, message)
-            win.box()
-            win.refresh()
-            input = win.getstr(height_of_msg, 1, input_length).decode('utf-8', 'backslashreplace')
-
-            # Clean up the window and settings changed
-            del win
-            curses.noecho()
-            curses.curs_set(0)
-            self.windows[1].refresh(self.scroll_x, self.scroll_y,
-                                    self.main_start_x_y[0], self.main_start_x_y[1],
-                                    self.main_end_x_y[0], self.main_end_x_y[1])
-            if match(regex, input):
-                break
-            elif not message_is_updated:
-                message_is_updated = True
-                message = self.make_message_fit_width(WRONG_INPUT_MESSAGE + p_message, self.window_dimensions[0][1]-2)
-                height_of_msg = len(message.splitlines())+1
-        return input
 
 def main(cwd: str) -> None:
     filepath = f"{cwd}\\data.json"
