@@ -88,14 +88,17 @@ class DataManager:
         return uuid4().hex
 
     # ADDING, CHANGING AND REMOVING DATA
-    def modify_task(self, data: dict, is_new_task=False) -> None:
+    def modify_task(self, data: dict, is_new_task=False, task_hash="") -> None:
         if is_new_task:
             id = self.gen_unique_hash()
             data["index"] = len(self.data["tasks"])
             self.update_groups(id, data["groups"])
             self.data["tasks"].update({id: data})
         else:
-            self.data["tasks"].update(data)
+            try:
+                self.data["tasks"][task_hash].update(data)
+            except:
+                pass
 
     def add_step(self, task_hash: str, data: dict) -> None:
         id = self.gen_unique_hash()
@@ -106,13 +109,9 @@ class DataManager:
         if task_hash not in self.data["tasks"].keys(): return
         self.data["tasks"][task_hash]["labels"].append(label)
 
-    def change_data_step(self, task_hash: str, data: dict) -> None:
+    def change_data_step(self, task_hash: str, step_hash: str,data: dict) -> None:
         if task_hash not in self.data["tasks"].keys(): return
-        self.data["tasks"][task_hash].update(data)
-
-    def change_importance(self, task_hash, importance: str | None) -> None:
-        if task_hash not in self.data["tasks"].keys(): return
-        self.data["tasks"][task_hash].update({"importance": importance})
+        self.data["tasks"][task_hash]["steps"][step_hash].update(data)
 
     def change_global_order_of_tasks(self, new_order: dict) -> None:
         # new order consist of task_hash: number
@@ -244,7 +243,8 @@ class DataManager:
             output.append([f"{idx+1}. {items[1]['name']} {''.join(f'[{label}]' for label in items[1]['labels'])}", items[1]["importance"]])
             # display details
             if items[0] == task_hash:
-                if items[1]["description"] != "": output.extend([[items[1]["description"], "None"], ["\n", "None"]])
+                if items[1]["description"] != "": output.append([items[1]["description"], "None"])
+                output.append(["\n", "None"])
                 # display steps with details
                 sorted_steps = dict(sorted(items[1]["steps"].items(), key=lambda item: item[1]["index"]))
                 for idx_2, values in enumerate(sorted_steps.values()):
@@ -255,22 +255,29 @@ class DataManager:
 
     def get_longest_entry_beautified(self) -> tuple[int]:
         """
-        Function returns the length of the longest beautified entry
+        Function returns the length of the longest beautified entry (height and width)
         """
         output = []
+        number_of_tasks = len(self.data["tasks"])
+        min_height = number_of_tasks
         # generate all outputs for all step hashes and determine the max len and height than
         data = dict(sorted(self.data["tasks"].items(), key=lambda item: item[1]['index']))
         for idx, items in enumerate(data.items()):
             output.append(f"{idx+1}. {items[1]['name']} {''.join(f'[{label}]' for label in items[1]['labels'])}")
             # display details
             if items[1]["description"] != "": output.append(items[1]["description"])
+            output.append("\n")
             # display steps with details
+            start_len = len(output)
             sorted_steps = dict(sorted(items[1]["steps"].items(), key=lambda item: item[1]["index"]))
             for idx_2, values in enumerate(sorted_steps.values()):
                 output.append(f"{' '*self.TAB_INDENT}{idx+1}.{idx_2+1} {values['name']}")
-                if values["description"] != "": output.extend([f"{' '*self.TAB_INDENT}{values['description']}", "\n"])
+                if values["description"] != "": output.append(f"{' '*self.TAB_INDENT}{values['description']}")
                 output.append("\n")
-        return (len(output), len(max(output, key=lambda x: len(x))))
+            end_len = len(output) - start_len
+            if end_len + number_of_tasks > min_height: min_height = end_len + number_of_tasks
+
+        return (min_height+2, len(max(output, key=lambda x: len(x)))) # min_height + 2 bc of the outline top and bottom
 
     # Update and validate data automaticly
     def update_groups(self, id: str, groups: list) -> None:

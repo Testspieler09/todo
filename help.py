@@ -20,41 +20,59 @@ FOOTER_TEXT = ["[H]elp", "[Q]uit"]
 
 STEP_DATA = ["To which task do you want to add the task?\nPlease provide the index.\nA `0` means cancel.", "Please provide a name for this step.", "Now a description please.", "Choose an importance for the step.\n[N]one; [L]ow; [M]edium; [H]igh"]
 
-TASK_DATA = ["Please provide a name for this task.", "Now a description please.", "Choose an importance for the task.\n[N]one; [L]ow; [M]edium; [H]igh", ["Do you want to add [E]xisting labels or create a [N]ew one?", "What labels should the task have?\nPlease separate them by a `,` e.g. `1, 2, 5`.\nA `0` means no label.", "Please provide a name for the new label"], ["Do you want to add [E]xisting groups or create a [N]ew one?", "What groups should the task belong to?\nPlease separate your choice by a `,` e.g. `1, 2, 5`.\nA `0` means no group.", "Please provide a name for the new label"]]
+TASK_DATA = ["Please provide a name for this task.", "Now a description please.", "Choose an importance for the task.\n[N]one; [L]ow; [M]edium; [H]igh", ["Do you want to add [E]xisting labels or create a [N]ew one?", "What labels should the task have?\nPlease separate them by a `,` e.g. `1, 2, 5`.\nA `0` means no label.", "Please provide a name for the new label"], ["Do you want to add [E]xisting groups or create a [N]ew one?", "What groups should the task belong to?\nPlease separate your choice by a `,` e.g. `1, 2, 5`.\nA `0` means no group.", "Please provide a name for the new group"]]
 
 INSTRUCTIONS = {
-        "change": {
-            "1": "Change Data:\nPlease provide the number or index of the task you want to change.\ne.g. `1` [for a the first task] or `1.2` [for the second step of the first task]",
-            "2": {
-                "task": TASK_DATA,
-                "step": STEP_DATA
-                }
-            },
-        "add": {
-            "1": "Add Data:\nDo you want to add a new [T]ask or [S]tep?",
-            "2": {
-                "task": TASK_DATA,
-                "step": STEP_DATA
-                }
-            },
-        "delete": {
-            "1": "Delete Data:\nWhat do you want to delete?\n[T]ask, [S]tep, [L]abel, [G]roup",
-            "task": "Which task do you want to delete?\nPlease provide it's index",
-            "step": "Which step do you want to delete?\nPlease provide the index.\ne.g. `1.2` [for the second step of the first task]",
-            "label": "Which label would you like to delete?\nPlease provide the index",
-            "group": "Which group would you like to delete?\nPlease provide the index",
-            "validation": "Are you shure you want to delete it?\n[Y]es; [N]o"
-            },
-        "show": "Show more details:\nPlease provide the number or index of the task you want to expand.\ne.g. `1` [for a the first task]\nTIPP: `0` -> close details of given task",
-        "display": {
-            "1": "Display Data:\nDo you want to display all tasks of a [G]roup, [L]abel or [I]mportance?\nTo disable the current filter use `0`",
-            "2": {
-                "group": "Display tasks of group:\nPlease provide the number/index of the group.\nInput `0` for all tasks that do not belong to a group\n",
-                "label": "Display tasks of label:\nPlease provide the number/index of the label.\nInput `0` for all tasks that do not have a label\n",
-                "importance": "Display tasks of importance:\nPlease choose between [L]ow, [M]edium, [H]igh or [N]one.\n"
-                }
-            }
+    "change": {
+        "1": "Change Data:\nWhat would you like to change?\n[T]ask; [S]tep; [O]rder",
+        "task": {
+            "1": "What would you like to change?\ne.g. `1, 2, 4`\n1. Name | 2. Desciption | 3. Importance | 4. Labels | 5. Groups |",
+            "2": ["Please provide a new name for this task.",
+                  "Please provide the new description.",
+                  "Choose a new importance for the task.\n[N]one; [L]ow; [M]edium; [H]igh",
+                  [
+                      "Do you want to add [E]xisting labels or create a [N]ew one?",
+                      "What labels should the task have?\nPlease separate them by a `,` e.g. `1, 2, 5`.\nA `0` means no label.\nNote that the labels won't be added to the existing ones but overwrite the old choice.",
+                      "Please provide a name for the new label.\nIt will be added to the other labels of this task."
+                    ],
+                  [
+                      "Do you want to add [E]xisting groups or create a [N]ew one?",
+                      "What groups should the task belong to?\nPlease separate your choice by a `,` e.g. `1, 2, 5`.\nA `0` means no group.\nNote that the groups won't be added to the existing ones but overwrite the old choice.",
+                      "Please provide a name for the new group.\nIt will be added to the other groups of this task."
+                    ]
+                  ],
+            "task_hash": "Please provide the index of the task you want to change the data of.\nA `0` means cancel."
+        },
+        "step": {
+            "1": "What would you like to change?\ne.g. `1, 2, 4`\n1. Name | 2. Desciption | 3. Importance |",
+            "2": ["Which step do you want to change?\nPlease provide the index.\ne.g. `1.2` [for the second step of the first task]", "Please provide a name for this step.", "Now a description please.", "Choose an importance for the step.\n[N]one; [L]ow; [M]edium; [H]igh"]
+
+        },
+        "order": {
+            "something": ""
         }
+    },
+    "add": {
+        "1": "Add Data:\nDo you want to add a new [T]ask or [S]tep?",
+        "task": TASK_DATA,
+        "step": STEP_DATA
+    },
+    "delete": {
+        "1": "Delete Data:\nWhat do you want to delete?\n[T]ask, [S]tep, [L]abel, [G]roup",
+        "task": "Which task do you want to delete?\nPlease provide it's index",
+        "step": "Which step do you want to delete?\nPlease provide the index.\ne.g. `1.2` [for the second step of the first task]",
+        "label": "Which label would you like to delete?\nPlease provide the index",
+        "group": "Which group would you like to delete?\nPlease provide the index",
+        "validation": "Are you shure you want to delete it?\n[Y]es; [N]o"
+    },
+    "show": "Show more details:\nPlease provide the number or index of the task you want to expand.\ne.g. `1` [for a the first task]\nTIPP: `0` -> close details of given task",
+    "display": {
+        "1": "Display Data:\nDo you want to display all tasks of a [G]roup, [L]abel or [I]mportance?\nTo disable the current filter use `0`",
+        "group": "Display tasks of group:\nPlease provide the number/index of the group.\nInput `0` for all tasks that do not belong to a group\n",
+        "label": "Display tasks of label:\nPlease provide the number/index of the label.\nInput `0` for all tasks that do not have a label\n",
+        "importance": "Display tasks of importance:\nPlease choose between [L]ow, [M]edium, [H]igh or [N]one.\n"
+    }
+}
 
 # FIXED INPUT LENGTHS
 CHOICE_LEN = 1
