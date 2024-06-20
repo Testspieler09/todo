@@ -12,6 +12,8 @@ The ToDo Manager is a minimalistic terminal based todo list, which has support f
     - if terminal can display color the task will be shown in different colors based on importance
 1. Support for task steps (just 1 layer for now)
     - e.g. Big Task -> Step 1, Step 2, etc
+1. Some advanced functionality
+    - reorder task, filter by label, importance etc.
 
 ## Usage
 
@@ -26,11 +28,11 @@ S -> [S]how more information of task
 
 A -> [A]dd task/step
 C -> [C]hange data/order
-D -> [D]isplay tasks of specific group, label or importance
-X -> delete task/step
+F -> [F]ilter tasks of specific group, label or importance
+D -> [D]elete task/step
 
 H -> toggle this [H]elpmessage
-Q -> [Q]uit program
+Q -> [Q]uit programey cheat sheet
 ```
 
 **The program does not care about the letter being capitalized**

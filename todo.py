@@ -102,9 +102,9 @@ class ScreenManager:
                 self.add_procedure()
             case "C" | "c":
                 self.change_procedure()
+            case "F" | "f":
+                self.filter_procedure()
             case "D" | "d":
-                self.display_procedure()
-            case "X" | "x":
                 self.delete_procedure()
             # Default operations
             case "H" | "h":
@@ -203,8 +203,8 @@ class ScreenManager:
                 input = self.get_input_string(INSTRUCTIONS["change"]["task"]["1"], MULTIINDEX_LEN, MULTIINDEX_REGEX)
                 idx = [int(i)-1 for i in sorted(set(input.replace(" ", "").split(",")))]
                 task_idx = self.get_input_string(INSTRUCTIONS["change"]["task"]["task_hash"], INDEX_LEN, INDEX_REGEX)
-                if task_idx == "0": return
                 task_hash = self.data.get_hash_of_task_with_index(int(task_idx), self.current_order_with_args)
+                if task_idx == "0" or task_hash == "": return
                 data = {}
                 if 0 in idx:
                     data["name"] = self.get_input_string(INSTRUCTIONS["change"]["task"]["2"][0], NAME_LEN, NAME_REGEX)
@@ -230,7 +230,7 @@ class ScreenManager:
                             data["labels"] = self.get_all_possible_items(index, labels)
                         case "n":
                             name = self.get_input_string(INSTRUCTIONS["change"]["task"]["2"][3][2], NAME_LEN, NAME_REGEX)
-                            data["labels"].append(name)
+                            self.data.add_label(task_hash, name)
                 if 4 in idx:
                     input = self.get_input_string(INSTRUCTIONS["change"]["task"]["2"][4][0], CHOICE_LEN, r"[EeNn]")
                     match input.lower():
@@ -240,15 +240,15 @@ class ScreenManager:
                             data["groups"] = self.get_all_possible_items(index, groups)
                         case "n":
                             name = self.get_input_string(INSTRUCTIONS["change"]["task"]["2"][4][2], NAME_LEN, NAME_REGEX)
-                            data["groups"].append(name)
+                            self.data.add_group(task_hash, name)
                 self.data.modify_task(data, False, task_hash)
             case "s":
                 input = self.get_input_string(INSTRUCTIONS["change"]["step"]["1"], MULTIINDEX_LEN, MULTIINDEX_REGEX)
                 idx = [int(i)-1 for i in sorted(set(input.replace(" ", "").split(",")))]
                 data = {}
-                task_step_idx = self.get_input_string(INSTRUCTIONS["change"]["step"]["2"][0], INDEX_LEN, INDEX_REGEX)
+                task_step_idx = self.get_input_string(INSTRUCTIONS["change"]["step"]["2"][0], STEP_IDX_LEN, STEP_IDX_REGEX)
                 task_hash, step_hash = self.data.get_hash_of_step_with_index(task_step_idx, self.current_order_with_args)
-                if not idx=="0" and task_hash!="":
+                if not idx=="0" and task_hash!="" and step_hash!="":
                     if 0 in idx:
                         data["name"] = self.get_input_string(INSTRUCTIONS["change"]["step"]["2"][1], NAME_LEN, NAME_REGEX)
                     if 1 in idx:
@@ -266,19 +266,33 @@ class ScreenManager:
                                 data["importance"] = "high"
                     self.data.change_data_step(task_hash, step_hash, data)
             case "o":
-                input = self.get_input_string(INSTRUCTIONS["change"]["order"]["something"], MULTIINDEX_LEN, MULTIINDEX_REGEX)
+                input = self.get_input_string(INSTRUCTIONS["change"]["order"]["what"], CHOICE_LEN, r"[TtSs]")
+                match input.lower():
+                    case "t":
+                        args = [self.get_input_string(INSTRUCTIONS["change"]["order"]["tasks"], CHOICE_LEN, r"[IiNn]")]
+                    case "s":
+                        index = self.get_input_string(INSTRUCTIONS["change"]["order"]["steps"], INDEX_LEN, INDEX_REGEX)
+                        task_hash = self.data.get_hash_of_task_with_index(int(index), self.current_order_with_args)
+                        if task_hash=="": return
+                        type_of_reorder = self.get_input_string(INSTRUCTIONS["change"]["order"]["order_type"], CHOICE_LEN, r"[IiNn]")
+                        args = [type_of_reorder, task_hash]
+                # try:
+                self.call_order_methods(input.lower(), args)
+                # except:
+                #     return
         self.update_content(eval(self.current_filter[0])(self.current_filter[1]))
         self.file.update_data(self.data.data)
         self.update_main_dimensions()
         self.beautify_output()
 
-    def display_procedure(self) -> None:
+    def filter_procedure(self) -> None:
         input = self.get_input_string(INSTRUCTIONS["display"]["1"], CHOICE_LEN, r"[GgLlIi0]")
         match input.lower():
             case "0":
                 self.current_filter = ["self.data.get_all_data", ()]
                 self.update_content(self.data.get_all_data())
                 self.current_order_with_args = ["standard", self.content]
+                self.data.change_current_order_to(self.current_order_with_args)
                 self.beautify_output()
             case "g":
                 groups = self.data.get_groups()
@@ -288,10 +302,12 @@ class ScreenManager:
                         self.current_filter = ["self.data.get_all_tasks_without", ("groups")]
                         self.update_content(self.data.get_all_tasks_without("groups"))
                         self.current_order_with_args = ["standard", self.content]
+                        self.data.change_current_order_to(self.current_order_with_args)
                     else:
                         self.current_filter = ["self.data.get_data_of_group", (list(self.data.data["order of tasks in group"].keys())[int(index)-1])]
                         self.update_content(self.data.get_data_of_group(list(self.data.data["order of tasks in group"].keys())[int(index)-1]))
                         self.current_order_with_args = ["group", groups[1][int(index)-1]]
+                        self.data.change_current_order_to(self.current_order_with_args)
                 except:
                     pass
                 self.beautify_output()
@@ -357,6 +373,34 @@ class ScreenManager:
             case "n":
                 pass
 
+    def call_order_methods(self, items_to_reorder: str, args: list[str]) -> None:
+        match args[0].lower():
+            case "i":
+                input = self.get_input_string(INSTRUCTIONS["change"]["order"]["insert"], MULTIINDEX_LEN, r"^\d+,\s*\d+$")
+                old_idx, new_idx = input.replace(" ", "").split(",")
+                match items_to_reorder:
+                    case "t":
+                        task_hash = self.data.get_hash_of_task_with_index(int(old_idx), self.current_order_with_args)
+                        if self.current_order_with_args[0]=="group":
+                            self.data.change_order_tasks_group_insertion(self.current_order_with_args[1], task_hash, new_idx)
+                        elif self.current_order_with_args[0]=="standard":
+                            self.data.change_order_tasks_global_insertion(task_hash, new_idx)
+                    case "s":
+                        task_hash, step_hash = self.data.get_hash_of_step_with_index(f"{args[1]}.{old_idx}")
+                        if task_hash=="" or step_hash=="": return
+                        self.data.change_order_of_steps_insertion(task_hash, step_hash, new_idx)
+            case "n":
+                new_order = self.get_input_new_order(INSTRUCTIONS["change"]["order"]["new order"], items_to_reorder, args)
+                if new_order==None: return
+                match items_to_reorder:
+                    case "t":
+                        if self.current_order_with_args[0]=="group":
+                            self.data.change_group_order_of_tasks(self.current_order_with_args[1], new_order)
+                        elif self.current_order_with_args[0]=="standard":
+                            self.data.change_global_order_of_tasks(new_order)
+                    case "s":
+                        self.data.change_order_of_steps(args[1], new_order)
+
     def get_input(self) -> str:
         try:
             return self.screen.getkey()
@@ -394,6 +438,62 @@ class ScreenManager:
                 message = self.make_message_fit_width(WRONG_INPUT_MESSAGE + p_message, self.window_dimensions[0][1]-2)
                 height_of_msg = len(message.splitlines())+1
         return input
+
+    def get_input_new_order(self, p_message: str, items_to_reorder: str, args: list[str]) -> None:
+        message = self.make_message_fit_width(p_message, self.window_dimensions[0][1]-2)
+        height_of_msg = len(message.splitlines())+1
+        message_is_updated = False
+        if items_to_reorder == "t" and self.current_order_with_args[0] == "standard":
+            content = self.content
+        elif items_to_reorder == "t" and self.current_order_with_args[0] == "group":
+            content = self.data.data["order of tasks in group"][self.current_order_with_args[1]]
+        elif items_to_reorder == "s":
+            content = self.data.data["tasks"][args[1]]["steps"]
+        input_length = len("".join(f"{i+1}, " for i in range(len(content))))
+        while True:
+            # Init new window and change some settings
+            win = curses.newwin(self.main_end_x_y[0]-1, self.main_end_x_y[1]+1, self.main_start_x_y[0], self.main_start_x_y[1])
+            curses.echo()
+            curses.curs_set(1)
+
+            # Output info and get input
+            win.addstr(1, 0, message)
+            win.box()
+            win.refresh()
+            input = win.getstr(height_of_msg, 1, input_length).decode('utf-8', 'backslashreplace')
+
+            # Clean up the window and settings changed
+            del win
+            curses.noecho()
+            curses.curs_set(0)
+            self.windows[1].refresh(self.scroll_x, self.scroll_y,
+                                    self.main_start_x_y[0], self.main_start_x_y[1],
+                                    self.main_end_x_y[0], self.main_end_x_y[1])
+
+            all_indices_given = False
+            if match(r"^\d+(,\s*\d+)*$", input):
+                new_order_idx = [int(i)-1 for i in input.replace(" ", "").split(",")]
+                all_indices_given = all(i in range(len(content)+1) for i in new_order_idx)
+
+            if all_indices_given:
+                break
+            elif input.replace(" ", "")=="0":
+                return
+            elif not message_is_updated:
+                message_is_updated = True
+                message = self.make_message_fit_width("You need to provide all indices and separate them by a `,`!!!\n\n" + p_message, self.window_dimensions[0][1]-2)
+                height_of_msg = len(message.splitlines())+1
+
+        if items_to_reorder == "t" and self.current_order_with_args[0] == "group":
+            # need to refactor this so it works
+            new_order = [self.data.get_hash_of_task_with_index(idx, self.current_order_with_args) for idx in new_order_idx]
+        elif items_to_reorder == "t" and self.current_order_with_args[0] == "standard":
+            new_order = {self.data.get_hash_of_task_with_index(i+1, self.current_order_with_args): idx for idx, i in enumerate(new_order_idx)}
+        elif items_to_reorder == "s":
+            new_order = {self.data.get_hash_of_step_with_task_hash_and_idx(args[1], f"{i+1}", self.current_order_with_args): idx for idx, i in enumerate(new_order_idx)}
+
+        print("new_order=", new_order)
+        return new_order
 
     def kill_scr(self) -> None:
         self.running = False
@@ -523,6 +623,7 @@ if __name__ == "__main__":
                             description="A minimalistic terminal-based todo-manager written with curses.",
                             epilog="Have fun using it.")
 
+    # add some args for backup management (use backup data, overwrite_main_data_with_backup, make manual backup)
     args = parser.parse_args()
 
     main(getcwd())
