@@ -10,10 +10,21 @@ The ToDo Manager is a minimalistic terminal based todo list, which has support f
     - e.g. bug, till tomorrow, etc
 1. Support for importance levels
     - if terminal can display color the task will be shown in different colors based on importance
+    - colors are based on terminal/shell's color pallet (None->White, Low->Green, Medium->Blue, High->Red)
 1. Support for task steps (just 1 layer for now)
     - e.g. Big Task -> Step 1, Step 2, etc
 1. Some advanced functionality
     - reorder task, filter by label, importance etc.
+1. Some backup functions
+    - to see them add the -h flag when calling the program
+
+## How does the program even look?
+
+<div align="center">
+    
+![ToDo](https://github.com/Testspieler09/todo/assets/142326461/5d25d5d6-a66d-4948-976d-d425d17a8ac1)
+    
+</div>
 
 ## Usage
 
