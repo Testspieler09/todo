@@ -1,4 +1,4 @@
-import curses
+from curses import newwin, newpad, initscr, init_pair, color_pair, start_color, curs_set, cbreak, noecho, nocbreak, echo, endwin, COLOR_BLACK, COLOR_BLUE, COLOR_GREEN, COLOR_RED, A_UNDERLINE, A_NORMAL
 from time import sleep
 from sys import exit
 from re import match
@@ -9,7 +9,7 @@ from FileManager import FileManager, DataManager
 
 class ScreenManager:
     def __init__(self, file: str, content=None, content_beautified=None) -> None:
-        self.screen = curses.initscr()
+        self.screen = initscr()
         self.file = file
         self.data = DataManager(self.file.data)
         self.running = True
@@ -22,8 +22,8 @@ class ScreenManager:
                                   (y, x),
                                   (len(help_lines)+1, max(len(line) for line in help_lines)+1)]
         self.windows = [self.screen, # footer
-                        curses.newpad(self.window_dimensions[1][0], self.window_dimensions[1][1]), # main todo
-                        curses.newpad(self.window_dimensions[2][0], self.window_dimensions[2][1])] # help message popup
+                        newpad(self.window_dimensions[1][0], self.window_dimensions[1][1]), # main todo
+                        newpad(self.window_dimensions[2][0], self.window_dimensions[2][1])] # help message popup
 
         self.scroll_y, self.scroll_x = 0, 0
         self.last_scroll_pos_main_scr = (0, 0)
@@ -37,18 +37,18 @@ class ScreenManager:
         self.current_filter = ["self.data.get_all_data", ()]
 
         # COLOR STUFF FOR IMPORTANCE
-        curses.start_color()
-        curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
-        curses.init_pair(2, curses.COLOR_BLUE, curses.COLOR_BLACK)
-        curses.init_pair(3, curses.COLOR_RED, curses.COLOR_BLACK)
-        self.low_importance = curses.color_pair(1)
-        self.medium_importance = curses.color_pair(2)
-        self.high_importance = curses.color_pair(3)
+        start_color()
+        init_pair(1, COLOR_GREEN, COLOR_BLACK)
+        init_pair(2, COLOR_BLUE, COLOR_BLACK)
+        init_pair(3, COLOR_RED, COLOR_BLACK)
+        self.low_importance = color_pair(1)
+        self.medium_importance = color_pair(2)
+        self.high_importance = color_pair(3)
 
         # ADJUST SETTINGS
-        curses.curs_set(0)
-        curses.cbreak()
-        curses.noecho()
+        curs_set(0)
+        cbreak()
+        noecho()
         self.screen.nodelay(True)
         self.screen.keypad(True)
 
@@ -61,7 +61,7 @@ class ScreenManager:
         headline = "ToDo Manager"
         self.output_text_to_window(0, self.space_footer_text(FOOTER_TEXT), self.window_dimensions[0][0]-1, 0)
         y, _ = self.get_coordinates_for_centered_text(headline)
-        self.output_text_to_window(0, headline, 1, y, curses.A_UNDERLINE)
+        self.output_text_to_window(0, headline, 1, y, A_UNDERLINE)
         self.beautify_output()
         while self.running:
             sleep(0.01) # so program doesn't use 100% cpu
@@ -414,9 +414,9 @@ class ScreenManager:
         message_is_updated = False
         while True:
             # Init new window and change some settings
-            win = curses.newwin(self.main_end_x_y[0]-1, self.main_end_x_y[1]+1, self.main_start_x_y[0], self.main_start_x_y[1])
-            curses.echo()
-            curses.curs_set(1)
+            win = newwin(self.main_end_x_y[0]-1, self.main_end_x_y[1]+1, self.main_start_x_y[0], self.main_start_x_y[1])
+            echo()
+            curs_set(1)
 
             # Output info and get input
             win.addstr(1, 0, message)
@@ -426,8 +426,8 @@ class ScreenManager:
 
             # Clean up the window and settings changed
             del win
-            curses.noecho()
-            curses.curs_set(0)
+            noecho()
+            curs_set(0)
             self.windows[1].refresh(self.scroll_x, self.scroll_y,
                                     self.main_start_x_y[0], self.main_start_x_y[1],
                                     self.main_end_x_y[0], self.main_end_x_y[1])
@@ -452,9 +452,9 @@ class ScreenManager:
         input_length = len("".join(f"{i+1}, " for i in range(len(content))))
         while True:
             # Init new window and change some settings
-            win = curses.newwin(self.main_end_x_y[0]-1, self.main_end_x_y[1]+1, self.main_start_x_y[0], self.main_start_x_y[1])
-            curses.echo()
-            curses.curs_set(1)
+            win = newwin(self.main_end_x_y[0]-1, self.main_end_x_y[1]+1, self.main_start_x_y[0], self.main_start_x_y[1])
+            echo()
+            curs_set(1)
 
             # Output info and get input
             win.addstr(1, 0, message)
@@ -464,8 +464,8 @@ class ScreenManager:
 
             # Clean up the window and settings changed
             del win
-            curses.noecho()
-            curses.curs_set(0)
+            noecho()
+            curs_set(0)
             self.windows[1].refresh(self.scroll_x, self.scroll_y,
                                     self.main_start_x_y[0], self.main_start_x_y[1],
                                     self.main_end_x_y[0], self.main_end_x_y[1])
@@ -495,10 +495,10 @@ class ScreenManager:
 
     def kill_scr(self) -> None:
         self.running = False
-        curses.nocbreak()
+        nocbreak()
         self.screen.keypad(False)
-        curses.echo()
-        curses.endwin()
+        echo()
+        endwin()
 
     # Update attributes automaticly
     def update_main_dimensions(self) -> None:
@@ -506,7 +506,7 @@ class ScreenManager:
         del self.window_dimensions[1]
         self.window_dimensions.insert(1, (y, x))
         del self.windows[1]
-        self.windows.insert(1, curses.newpad(self.window_dimensions[1][0], self.window_dimensions[1][1]))
+        self.windows.insert(1, newpad(self.window_dimensions[1][0], self.window_dimensions[1][1]))
 
     def update_content(self, content: dict) -> None:
         """
@@ -573,7 +573,7 @@ class ScreenManager:
 
     def output_text_to_window(self, win: int, text: str, y=0, x=0, *args) -> None:
         error_msg = "Couldn't print string to window."
-        attributes = curses.A_NORMAL
+        attributes = A_NORMAL
         for attr in args:
             attributes |= attr
         try:
@@ -635,7 +635,8 @@ def main(cwd: str, flags) -> None:
     exit()
 
 if __name__ == "__main__":
-    from os import getcwd
+    from sys import argv
+    from os.path import split
     from argparse import ArgumentParser
 
     parser = ArgumentParser(prog="ToDo",
@@ -663,4 +664,4 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    main(getcwd(), args)
+    main(split(argv[0])[0], args)
