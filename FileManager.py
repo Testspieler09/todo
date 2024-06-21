@@ -83,7 +83,6 @@ class DataManager:
         self.current_order = ["standard", ""]
 
     def change_current_order_to(self, order: str) -> None:
-        print("current_order changed", order)
         self.current_order = order
 
     def gen_unique_hash(self) -> str:
@@ -127,13 +126,42 @@ class DataManager:
         self.data["tasks"][task_hash]["steps"][step_hash].update(data)
 
     def change_order_tasks_global_insertion(self, task_hash: str, new_idx: int) -> None:
-        pass
+        if task_hash not in self.data["tasks"]: return
+
+        current_index = self.data["tasks"][task_hash]['index']
+
+        for value in self.data["tasks"].values():
+            if value["index"] == new_idx and current_index > new_idx:
+                value["index"] += 1
+            elif value["index"] == new_idx and current_index < new_idx:
+                value["index"] -= 1
+            elif value["index"] > new_idx:
+                value["index"] += 1
+
+        self.data["tasks"][task_hash]["index"] = new_idx
 
     def change_order_of_steps_insertion(self, task_hash: str, step_hash: str, new_idx: int) -> None:
-        pass
+        if task_hash not in self.data["tasks"]: return
+        if step_hash not in self.data["tasks"][task_hash]["steps"]: return
+
+        current_index = self.data["tasks"][task_hash]["steps"][step_hash]['index']
+
+        for value in self.data["tasks"][task_hash]["steps"].values():
+            if value["index"] == new_idx and current_index > new_idx:
+                value["index"] += 1
+            elif value["index"] == new_idx and current_index < new_idx:
+                value["index"] -= 1
+            elif value["index"] > new_idx:
+                value["index"] += 1
+
+        self.data["tasks"][task_hash]["steps"][step_hash]["index"] = new_idx
 
     def change_order_tasks_group_insertion(self, group_name: str, task_hash: str, new_idx: int) -> None:
-        pass
+        if group_name not in self.data["order of tasks in group"].keys(): return
+        if task_hash not in self.data["order of tasks in group"][group_name]: return
+        current_index = self.data["order of tasks in group"][group_name].index(task_hash)
+        del self.data["order of tasks in group"][group_name][current_index]
+        self.data["order of tasks in group"][group_name].insert(new_idx, task_hash)
 
     def change_global_order_of_tasks(self, new_order: dict) -> None:
         # new order consist of task_hash: number
@@ -144,8 +172,8 @@ class DataManager:
     def change_order_of_steps(self, task_hash: str, new_order: dict) -> None:
         if task_hash not in self.data["tasks"].keys(): return
         for hash, value in new_order.items():
-            if hash not in self.data["tasks"][task_hash].keys(): continue
-            self.data["tasks"][task_hash][hash]["index"] = value
+            if hash not in self.data["tasks"][task_hash]["steps"].keys(): continue
+            self.data["tasks"][task_hash]["steps"][hash]["index"] = value
 
     def change_group_order_of_tasks(self, group_name: str, order: list[str]) -> None:
         if group_name not in self.data["order of tasks in group"]: return
@@ -270,7 +298,6 @@ class DataManager:
         if data == {}: return [["You did not create a task yet. Press A to change that.", "None"]]
         if self.current_order[0] == "group":
             index_map = {v: i for i, v in enumerate(self.data["order of tasks in group"][self.current_order[1]])}
-            print(index_map)
             data = dict(sorted(data.items(), key=lambda pair: index_map[pair[0]]))
         else:
             data = dict(sorted(data.items(), key=lambda item: item[1]['index']))

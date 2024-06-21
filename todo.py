@@ -276,10 +276,10 @@ class ScreenManager:
                         if task_hash=="": return
                         type_of_reorder = self.get_input_string(INSTRUCTIONS["change"]["order"]["order_type"], CHOICE_LEN, r"[IiNn]")
                         args = [type_of_reorder, task_hash]
-                # try:
-                self.call_order_methods(input.lower(), args)
-                # except:
-                #     return
+                try:
+                    self.call_order_methods(input.lower(), args)
+                except:
+                    return
         self.update_content(eval(self.current_filter[0])(self.current_filter[1]))
         self.file.update_data(self.data.data)
         self.update_main_dimensions()
@@ -382,13 +382,13 @@ class ScreenManager:
                     case "t":
                         task_hash = self.data.get_hash_of_task_with_index(int(old_idx), self.current_order_with_args)
                         if self.current_order_with_args[0]=="group":
-                            self.data.change_order_tasks_group_insertion(self.current_order_with_args[1], task_hash, new_idx)
+                            self.data.change_order_tasks_group_insertion(self.current_order_with_args[1], task_hash, int(new_idx)-1)
                         elif self.current_order_with_args[0]=="standard":
-                            self.data.change_order_tasks_global_insertion(task_hash, new_idx)
+                            self.data.change_order_tasks_global_insertion(task_hash, int(new_idx)-1)
                     case "s":
-                        task_hash, step_hash = self.data.get_hash_of_step_with_index(f"{args[1]}.{old_idx}")
-                        if task_hash=="" or step_hash=="": return
-                        self.data.change_order_of_steps_insertion(task_hash, step_hash, new_idx)
+                        step_hash = self.data.get_hash_of_step_with_task_hash_and_idx(args[1], old_idx, self.current_order_with_args)
+                        if args[1]=="" or step_hash=="": return
+                        self.data.change_order_of_steps_insertion(args[1], step_hash, int(new_idx)-1)
             case "n":
                 new_order = self.get_input_new_order(INSTRUCTIONS["change"]["order"]["new order"], items_to_reorder, args)
                 if new_order==None: return
@@ -485,14 +485,12 @@ class ScreenManager:
                 height_of_msg = len(message.splitlines())+1
 
         if items_to_reorder == "t" and self.current_order_with_args[0] == "group":
-            # need to refactor this so it works
-            new_order = [self.data.get_hash_of_task_with_index(idx, self.current_order_with_args) for idx in new_order_idx]
+            new_order = [self.data.get_hash_of_task_with_index(idx+1, self.current_order_with_args) for idx in new_order_idx]
         elif items_to_reorder == "t" and self.current_order_with_args[0] == "standard":
             new_order = {self.data.get_hash_of_task_with_index(i+1, self.current_order_with_args): idx for idx, i in enumerate(new_order_idx)}
         elif items_to_reorder == "s":
             new_order = {self.data.get_hash_of_step_with_task_hash_and_idx(args[1], f"{i+1}", self.current_order_with_args): idx for idx, i in enumerate(new_order_idx)}
 
-        print("new_order=", new_order)
         return new_order
 
     def kill_scr(self) -> None:
@@ -603,16 +601,37 @@ class ScreenManager:
         lines = [" "+j for i in paras for j in wrap(i,width)]
         return "\n".join(["" if i==" dbc71b7fc9e348da85ae5e095bd80855" else i for i in lines])
 
-def main(cwd: str) -> None:
+def main(cwd: str, flags) -> None:
+    if flags.manualBackup:
+        filepath = f"{cwd}\\data.json"
+        if exists(filepath):
+            file = FileManager(filepath)
+        else:
+            file = FileManager.for_new_file(filepath)
+        file.write_backup()
+        exit()
+
+    if flags.overwriteMainFile:
+        filepath = f"{cwd}\\data.json"
+        if exists(filepath):
+            file = FileManager(filepath)
+        else:
+            file = FileManager.for_new_file(filepath)
+        file.overwrite_main_data_with_backup()
+        exit()
+
+    if flags.useBackup:
+        filepath = f"{cwd}\\data.backup"
+    else:
+        filepath = f"{cwd}\\data.json"
     filepath = f"{cwd}\\data.json"
     if exists(filepath):
         file = FileManager(filepath)
     else:
         file = FileManager.for_new_file(filepath)
-    # if data_is_validated:
-    #   file.write_backup()
+    file.write_backup()
     screen = ScreenManager(file)
-    print("Do something after finishing to do manager")
+    print("Thank you for using ToDo. If there is any issue with the project open an issue on github [ https://github.com/Testspieler09/todo ]")
     exit()
 
 if __name__ == "__main__":
@@ -623,7 +642,25 @@ if __name__ == "__main__":
                             description="A minimalistic terminal-based todo-manager written with curses.",
                             epilog="Have fun using it.")
 
-    # add some args for backup management (use backup data, overwrite_main_data_with_backup, make manual backup)
+    parser.add_argument("-ub", "--useBackup",
+                        default=False,
+                        nargs="?",
+                        const=False,
+                        type=bool,
+                        help="Use the backup data (e.g. if something went wrong with the main file).")
+    parser.add_argument("-om", "--overwriteMainFile",
+                        default=False,
+                        nargs="?",
+                        const=False,
+                        type=bool,
+                        help="Overwrite the data of the main file with the backup data.")
+    parser.add_argument("-mb", "--manualBackup",
+                        default=False,
+                        nargs="?",
+                        const=False,
+                        type=bool,
+                        help="Do a manual backup.")
+
     args = parser.parse_args()
 
-    main(getcwd())
+    main(getcwd(), args)
