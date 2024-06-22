@@ -350,7 +350,7 @@ class ScreenManager:
         match input.lower():
             case "t":
                 index = self.get_input_string(INSTRUCTIONS["delete"]["task"], INDEX_LEN, INDEX_REGEX)
-                data_to_delete = ["task", self.data.get_hash_of_task_with_index(int(index)-1, self.current_order_with_args)]
+                data_to_delete = ["task", self.data.get_hash_of_task_with_index(int(index), self.current_order_with_args)]
             case "s":
                 index = self.get_input_string(INSTRUCTIONS["delete"]["step"], STEP_IDX_LEN, STEP_IDX_REGEX)
                 data_to_delete = ["step", self.data.get_hash_of_step_with_index(index, self.current_order_with_args)]
