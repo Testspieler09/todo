@@ -3,7 +3,7 @@ from time import sleep
 from sys import exit
 from re import match
 from textwrap import wrap
-from os.path import exists
+from os.path import exists, join
 from help import FOOTER_TEXT, HELP_MESSAGE, INSTRUCTIONS, WRONG_INPUT_MESSAGE, CHOICE_LEN, NAME_LEN, DESCRIPTION_LEN, INDEX_LEN, MULTIINDEX_LEN, STEP_IDX_LEN, MULTIINDEX_REGEX, INDEX_REGEX, NAME_REGEX, STEP_IDX_REGEX
 from FileManager import FileManager, DataManager
 
@@ -602,8 +602,8 @@ class ScreenManager:
         return "\n".join(["" if i==" dbc71b7fc9e348da85ae5e095bd80855" else i for i in lines])
 
 def main(cwd: str, flags) -> None:
+    filepath = join(cwd, "data.json")
     if flags.manualBackup:
-        filepath = f"{cwd}\\data.json"
         if exists(filepath):
             file = FileManager(filepath)
         else:
@@ -612,7 +612,6 @@ def main(cwd: str, flags) -> None:
         exit()
 
     if flags.overwriteMainFile:
-        filepath = f"{cwd}\\data.json"
         if exists(filepath):
             file = FileManager(filepath)
         else:
@@ -620,11 +619,7 @@ def main(cwd: str, flags) -> None:
         file.overwrite_main_data_with_backup()
         exit()
 
-    if flags.useBackup:
-        filepath = f"{cwd}\\data.backup"
-    else:
-        filepath = f"{cwd}\\data.json"
-    filepath = f"{cwd}\\data.json"
+    if flags.useBackup: filepath = join(cwd, "data.backup")
     if exists(filepath):
         file = FileManager(filepath)
     else:
