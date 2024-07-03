@@ -192,6 +192,11 @@ class DataManager:
 
     def delete_task(self, task_hash: str) -> None:
         if task_hash not in self.data["tasks"].keys(): return
+        for group in self.data["tasks"][task_hash]["groups"]:
+            try:
+                self.data["order of tasks in group"][group].remove(task_hash)
+            except:
+                print("Group doesnt exist or task_hash is not in it.")
         del self.data["tasks"][task_hash]
 
     def delete_step(self, task_hash: str, step_hash: str) -> None:

@@ -290,9 +290,9 @@ class ScreenManager:
         match input.lower():
             case "0":
                 self.current_filter = ["self.data.get_all_data", ()]
-                self.update_content(self.data.get_all_data())
                 self.current_order_with_args = ["standard", self.content]
                 self.data.change_current_order_to(self.current_order_with_args)
+                self.update_content(self.data.get_all_data())
                 self.beautify_output()
             case "g":
                 groups = self.data.get_groups()
@@ -300,14 +300,14 @@ class ScreenManager:
                 try:
                     if index == "0":
                         self.current_filter = ["self.data.get_all_tasks_without", ("groups")]
-                        self.update_content(self.data.get_all_tasks_without("groups"))
                         self.current_order_with_args = ["standard", self.content]
                         self.data.change_current_order_to(self.current_order_with_args)
+                        self.update_content(self.data.get_all_tasks_without("groups"))
                     else:
                         self.current_filter = ["self.data.get_data_of_group", (list(self.data.data["order of tasks in group"].keys())[int(index)-1])]
-                        self.update_content(self.data.get_data_of_group(list(self.data.data["order of tasks in group"].keys())[int(index)-1]))
                         self.current_order_with_args = ["group", groups[1][int(index)-1]]
                         self.data.change_current_order_to(self.current_order_with_args)
+                        self.update_content(self.data.get_data_of_group(list(self.data.data["order of tasks in group"].keys())[int(index)-1]))
                 except:
                     pass
                 self.beautify_output()
