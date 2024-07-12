@@ -12,7 +12,10 @@ class FileManager:
         if not exists(path_to_file): raise Exception("File not found in given directory.")
         self.path_to_file: str = path_to_file
         self.backup_path: str = splitext(path_to_file)[0] + ".backup"
-        self.data: dict = self.read_file_data()
+        try:
+            self.data: dict = self.read_file_data()
+        except:
+            print("Loading JSON file failed")
 
     @classmethod
     def for_new_file(cls, path_with_filename_and_extension: str) -> None:
@@ -52,7 +55,7 @@ class FileManager:
 
     def overwrite_main_data_with_backup(self) -> None:
         with open(self.backup_path, "r") as f:
-            update_data(load(f))
+            self.update_data(load(f))
 
 class DataManager:
     """
@@ -350,7 +353,7 @@ class DataManager:
     def update_groups(self, task_hash: str, groups: list) -> None:
         for group in groups:
             try:
-                if not task_hash in self.data["order of tasks in group"][group]: self.data["order of tasks in group"][group].append(id)
+                if not task_hash in self.data["order of tasks in group"][group]: self.data["order of tasks in group"][group].append(task_hash)
             except:
                 self.data["order of tasks in group"].update({group: [task_hash]})
 

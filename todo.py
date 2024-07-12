@@ -639,22 +639,13 @@ if __name__ == "__main__":
                             epilog="Have fun using it.")
 
     parser.add_argument("-ub", "--useBackup",
-                        default=False,
-                        nargs="?",
-                        const=False,
-                        type=bool,
+                        action="store_true",
                         help="Use the backup data (e.g. if something went wrong with the main file).")
     parser.add_argument("-om", "--overwriteMainFile",
-                        default=False,
-                        nargs="?",
-                        const=False,
-                        type=bool,
+                        action="store_true",
                         help="Overwrite the data of the main file with the backup data.")
     parser.add_argument("-mb", "--manualBackup",
-                        default=False,
-                        nargs="?",
-                        const=False,
-                        type=bool,
+                        action="store_true",
                         help="Do a manual backup.")
 
     args = parser.parse_args()
