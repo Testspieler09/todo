@@ -137,7 +137,7 @@ class ScreenManager:
         self.beautify_output()
 
     def add_procedure(self) -> None:
-        input = self.get_input_string(INSTRUCTIONS["add"]["1"], CHOICE_LEN, r"[TtSs]")
+        input = self.get_input_string(INSTRUCTIONS["add"]["1"], CHOICE_LEN, r"[TtSsLlGg]")
         match input.lower():
             case "t":
                 data = {}
@@ -191,13 +191,17 @@ class ScreenManager:
                         case "h":
                             data["importance"] = "high"
                     self.data.add_step(task_hash, data)
+            case "l" | "g":
+                instruction = INSTRUCTIONS["add"]["label"] if input.lower() == "l" else INSTRUCTIONS["add"]["group"]
+                name = self.get_input_string(instruction, NAME_LEN, NAME_REGEX)
+                self.data.add_new_label_or_group(input.lower(), name)
         self.update_content(eval(self.current_filter[0])(self.current_filter[1]))
         self.file.update_data(self.data.data)
         self.update_main_dimensions()
         self.beautify_output()
 
     def change_procedure(self) -> None:
-        input = self.get_input_string(INSTRUCTIONS["change"]["1"], CHOICE_LEN, r"[TtSsOo]")
+        input = self.get_input_string(INSTRUCTIONS["change"]["1"], CHOICE_LEN, r"[TtSsOoRr]")
         match input.lower():
             case "t":
                 input = self.get_input_string(INSTRUCTIONS["change"]["task"]["1"], MULTIINDEX_LEN, MULTIINDEX_REGEX)
@@ -280,6 +284,13 @@ class ScreenManager:
                     self.call_order_methods(input.lower(), args)
                 except:
                     return
+            case "r":
+                type_of_value = self.get_input_string(INSTRUCTIONS["change"]["rename"][0], CHOICE_LEN, r"[GgLl0]")
+                if type_of_value=="0": return
+                data = self.data.get_groups() if type_of_value.lower() == "g" else self.data.get_labels()
+                old_name = self.get_input_string(INSTRUCTIONS["change"]["rename"][1] + data[0], INDEX_LEN, INDEX_REGEX)
+                new_name = self.get_input_string(INSTRUCTIONS["change"]["rename"][2] + f"{data[1][int(old_name)-1]}.", NAME_LEN, NAME_REGEX)
+                self.data.rename(type_of_value, new_name, data[1][int(old_name)-1])
         self.update_content(eval(self.current_filter[0])(self.current_filter[1]))
         self.file.update_data(self.data.data)
         self.update_main_dimensions()
