@@ -208,6 +208,8 @@ class DataManager:
         del self.data["tasks"][task_hash]["steps"][step_hash]
 
     def delete_label(self, label: str) -> None:
+        if label in self.data["labels"]:
+            self.data["labels"].remove(label)
         for value in self.data["tasks"].values():
             if label in value["labels"]: value["labels"].remove(label)
 

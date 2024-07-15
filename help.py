@@ -6,10 +6,10 @@ HELP_MESSAGE = """
  Arrow-Keys -> navigation/scrolling content
  S -> [S]how more information of task
 
- A -> [A]dd task/step
- C -> [C]hange data/order
+ A -> [A]dd task/step/label/group
+ C -> [C]hange data/order/rename label or group
  F -> [F]ilter tasks of specific group, label or importance
- D -> [D]elete task/step
+ D -> [D]elete task/step/label/group
 
  H -> toggle this [H]elpmessage
  Q -> [Q]uit program"""

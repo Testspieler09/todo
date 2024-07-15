@@ -21,9 +21,11 @@ The ToDo Manager is a minimalistic terminal based todo list, which has support f
 ## How does the program even look?
 
 <div align="center">
-    
+
 ![ToDo](https://github.com/Testspieler09/todo/assets/142326461/5d25d5d6-a66d-4948-976d-d425d17a8ac1)
-    
+
+**Image is outdated as the help message changed (correct help message further below).**
+
 </div>
 
 ## Usage
@@ -37,13 +39,13 @@ Key cheat sheet
 Arrow-Keys -> navigation/scrolling content
 S -> [S]how more information of task
 
-A -> [A]dd task/step
-C -> [C]hange data/order
+A -> [A]dd task/step/label/group
+C -> [C]hange data/order/rename label or group
 F -> [F]ilter tasks of specific group, label or importance
-D -> [D]elete task/step
+D -> [D]elete task/step/label/group
 
 H -> toggle this [H]elpmessage
-Q -> [Q]uit programey cheat sheet
+Q -> [Q]uit program"""
 ```
 
 **The program does not care about the letter being capitalized**
