@@ -45,7 +45,7 @@ F -> [F]ilter tasks of specific group, label or importance
 D -> [D]elete task/step/label/group
 
 H -> toggle this [H]elpmessage
-Q -> [Q]uit program"""
+Q -> [Q]uit program
 ```
 
 **The program does not care about the letter being capitalized**
