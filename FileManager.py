@@ -62,6 +62,7 @@ class DataManager:
     A class that manages a dict that was created from a JSON file of the following scheme:
     {
         "order of tasks in group": {"group name": ["hash of first task", "..."]},
+        "labels": ["label name", "..."],
         "tasks": {
             "task_hash": {
                 "name": str,
@@ -124,9 +125,37 @@ class DataManager:
         except:
             self.data["order of tasks in group"].update({group: [task_hash]})
 
+    def add_new_label_or_group(self, type_of_value: str, name: str) -> None:
+        match type_of_value:
+            case "l":
+                if name in self.data["labels"]: return
+                self.data["labels"].append(name)
+            case "g":
+                if name in self.data["order of tasks in group"].keys(): return
+                self.data["order of tasks in group"][name] = []
+
     def change_data_step(self, task_hash: str, step_hash: str,data: dict) -> None:
         if task_hash not in self.data["tasks"].keys(): return
         self.data["tasks"][task_hash]["steps"][step_hash].update(data)
+
+    def rename(self, type_of_value: str, new_name: str, old_name: str) -> None:
+        match type_of_value.lower():
+            case "g":
+                if not old_name in self.data["order of tasks in group"].keys(): return
+                values = self.data["order of tasks in group"][old_name]
+                self.data["order of tasks in group"][new_name] = values
+                del self.data["order of tasks in group"][old_name]
+                for task_hash in values:
+                    self.data["tasks"][task_hash]["groups"].append(new_name)
+                    self.data["tasks"][task_hash]["groups"].remove(old_name)
+            case "l":
+                if not old_name in self.data["labels"]: return
+                self.data["labels"].remove(old_name)
+                self.data["labels"].append(new_name)
+                for values in self.data["tasks"].values():
+                    if old_name in values["labels"]:
+                        values["labels"].remove(old_name)
+                        values["labels"].append(new_name)
 
     def change_order_tasks_global_insertion(self, task_hash: str, new_idx: int) -> None:
         if task_hash not in self.data["tasks"]: return
@@ -261,7 +290,7 @@ class DataManager:
 
     def get_labels(self) -> tuple[str | list]:
         output = "\n"
-        labels_names = sorted(list(set((i for j in self.data["tasks"].values() for i in j["labels"]))))
+        labels_names = sorted(self.data["labels"])
         for idx, name in enumerate(labels_names):
             output += f"{idx+1}. {name} | "
         if output=="\n": return "\nThere are no labels defined. Input any number to continue"

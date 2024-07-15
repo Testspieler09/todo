@@ -24,7 +24,7 @@ TASK_DATA = ["Please provide a name for this task.", "Now a description please."
 
 INSTRUCTIONS = {
     "change": {
-        "1": "Change Data:\nWhat would you like to change?\n[T]ask; [S]tep; [O]rder",
+        "1": "Change Data:\nWhat would you like to change?\n[T]ask; [S]tep; [O]rder; [R]ename label/group",
         "task": {
             "1": "What would you like to change?\ne.g. `1, 2, 4`\n1. Name | 2. Desciption | 3. Importance | 4. Labels | 5. Groups |",
             "2": ["Please provide a new name for this task.",
@@ -55,12 +55,15 @@ INSTRUCTIONS = {
             "order_type": "Choose how you want to order the data.\n[I]nsert specific task/step at index; provide all indices as [N]ew order",
             "insert": "Please provide the index of the task/step you want to move and then the index it should be in separate by a `,`.\ne.g. `4, 1` to move the 4th task/step to the top (index 1)",
             "new order": "Please provide the new order of tasks/steps. Do it by providing a new arrangement of the old indices.\ne.g. `2, 1, 3` if you have 3 tasks/steps and want to reorder them so the first and second tasks/steps are switched\nA `0` means cancel the process"
-        }
+        },
+        "rename": ["Do you want to rename a [L]abel or [G]roup?\nA `0` means cancel", "Please provide the index of the label/group", "Please provide the new name for the label/group named "]
     },
     "add": {
-        "1": "Add Data:\nDo you want to add a new [T]ask or [S]tep?",
+        "1": "Add Data:\nDo you want to add a new [T]ask, [S]tep, [L]abel or [G]roup?",
         "task": TASK_DATA,
-        "step": STEP_DATA
+        "step": STEP_DATA,
+        "label": "Please provide the name for the new label.",
+        "group": "Please provide the name for the new group."
     },
     "delete": {
         "1": "Delete Data:\nWhat do you want to delete?\n[T]ask, [S]tep, [L]abel, [G]roup",
