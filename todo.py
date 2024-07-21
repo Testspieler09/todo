@@ -97,14 +97,19 @@ class ScreenManager:
                 self.scroll_pad(self.active_window)
             # Main operations
             case "S" | "s":
+                if self.active_window == 2: return
                 self.show_procedure()
             case "A" | "a":
+                if self.active_window == 2: return
                 self.add_procedure()
             case "C" | "c":
+                if self.active_window == 2: return
                 self.change_procedure()
             case "F" | "f":
+                if self.active_window == 2: return
                 self.filter_procedure()
             case "D" | "d":
+                if self.active_window == 2: return
                 self.delete_procedure()
             # Default operations
             case "H" | "h":
