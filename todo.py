@@ -613,9 +613,10 @@ class ScreenManager:
             start_y += 1
 
     def make_message_fit_width(self, message: str, width: int) -> str:
-        paras = ["dbc71b7fc9e348da85ae5e095bd80855" if i == "" else i for i in message.splitlines()] # using a uuid4 here to preserve the custom linespacing via `\n`
+        hash = "dbc71b7fc9e348da85ae5e095bd80855" if len("dbc71b7fc9e348da85ae5e095bd80855") < width else "8da85"
+        paras = [hash if i == "" else i for i in message.splitlines()] # using a uuid4 here to preserve the custom linespacing via `\n`
         lines = [" "+j for i in paras for j in wrap(i,width)]
-        return "\n".join(["" if i==" dbc71b7fc9e348da85ae5e095bd80855" else i for i in lines])
+        return "\n".join(["" if i==f" {hash}" else i for i in lines])
 
 def main(cwd: str, flags) -> None:
     filepath = join(cwd, "data.json")
