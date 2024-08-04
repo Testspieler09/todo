@@ -401,11 +401,3 @@ class DataManager:
                 sorted_data = dict(sorted(self.data["tasks"][type_of_deletion_with_args[1][0]]["steps"].items(), key=lambda item: item[1]["index"]))
                 for idx, step in enumerate(sorted_data.values()):
                     step["index"] = idx
-
-if __name__ == "__main__":
-    from os import getcwd
-    cwd = getcwd()
-    filepath = split(argv[0])[0] + "\\" + "data.backup"
-    f = FileManager(f"{cwd}\\data.json")
-    data = DataManager(f.data)
-    print(data.display_tasks(data.data["tasks"]))
