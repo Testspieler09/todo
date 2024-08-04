@@ -22,7 +22,7 @@ The ToDo Manager is a minimalistic terminal based todo list, which has support f
 
 <div align="center">
 
-![ToDo](https://github.com/Testspieler09/todo/assets/142326461/5d25d5d6-a66d-4948-976d-d425d17a8ac1)
+![ToDo](assets/program.png)
 
 **Image is outdated as the help message changed (correct help message further below).**
 
