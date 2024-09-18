@@ -647,13 +647,19 @@ class ScreenManager:
                 index = self.get_input_string(
                     INSTRUCTIONS["delete"]["label"] + labels[0], INDEX_LEN, INDEX_REGEX
                 )
-                data_to_delete = ["label", labels[1][int(index) - 1]]
+                try:
+                    data_to_delete = ["label", labels[1][int(index) - 1]]
+                except IndexError:
+                    return
             case "g":
                 groups = self.data.get_groups()
                 index = self.get_input_string(
                     INSTRUCTIONS["delete"]["group"] + groups[0], INDEX_LEN, INDEX_REGEX
                 )
-                data_to_delete = ["group", groups[1][int(index) - 1]]
+                try:
+                    data_to_delete = ["group", groups[1][int(index) - 1]]
+                except IndexError:
+                    return
         input = self.get_input_string(
             INSTRUCTIONS["delete"]["validation"], CHOICE_LEN, r"[YyNn]"
         )
