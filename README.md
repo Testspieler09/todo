@@ -1,5 +1,7 @@
 # ToDo (terminal app)
 
+![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
 The ToDo Manager is a minimalistic terminal based todo list, which has support for groups, labels and 3 different importance levels (low, medium, high). The program was developed on Windows 11 but should be portable. If there are any problems please open an issue or send a pull request.
 
 ## Features
