@@ -11,6 +11,7 @@ from curses import (
     nocbreak,
     echo,
     endwin,
+    use_default_colors,
     COLOR_BLACK,
     COLOR_BLUE,
     COLOR_GREEN,
@@ -89,9 +90,15 @@ class ScreenManager:
 
         # COLOR STUFF FOR IMPORTANCE
         start_color()
-        init_pair(1, COLOR_GREEN, COLOR_BLACK)
-        init_pair(2, COLOR_BLUE, COLOR_BLACK)
-        init_pair(3, COLOR_RED, COLOR_BLACK)
+        if use_transparency:
+            use_default_colors()
+            init_pair(1, COLOR_GREEN, -1)
+            init_pair(2, COLOR_BLUE, -1)
+            init_pair(3, COLOR_RED, -1)
+        else:
+            init_pair(1, COLOR_GREEN, COLOR_BLACK)
+            init_pair(2, COLOR_BLUE, COLOR_BLACK)
+            init_pair(3, COLOR_RED, COLOR_BLACK)
         self.low_importance = color_pair(1)
         self.medium_importance = color_pair(2)
         self.high_importance = color_pair(3)
@@ -710,7 +717,7 @@ class ScreenManager:
                 new_order = self.get_input_new_order(
                     INSTRUCTIONS["change"]["order"]["new order"], items_to_reorder, args
                 )
-                if new_order == None:
+                if new_order is None:
                     return
                 match items_to_reorder:
                     case "t":
@@ -730,7 +737,7 @@ class ScreenManager:
             return None
 
     def get_input_string(self, p_message: str, input_length: int, p_regex=None) -> str:
-        regex = r"[\S\s]*" if p_regex == None else p_regex
+        regex = r"[\S\s]*" if p_regex is None else p_regex
         message = self.make_message_fit_width(
             p_message, self.window_dimensions[0][1] - 2
         )
@@ -1005,6 +1012,10 @@ class ScreenManager:
 
 def main(cwd: str, flags) -> None:
     filepath = join(cwd, "data.json")
+
+    global use_transparency
+    use_transparency = flags.transparency
+
     if flags.manualBackup:
         if exists(filepath):
             file = FileManager(filepath)
@@ -1028,7 +1039,7 @@ def main(cwd: str, flags) -> None:
     else:
         file = FileManager.for_new_file(filepath)
     file.write_backup()
-    screen = ScreenManager(file)
+    ScreenManager(file)
     print(
         "Thank you for using ToDo. If there is any issue with the project open an issue on github [ https://github.com/Testspieler09/todo ]"
     )
@@ -1060,6 +1071,12 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-mb", "--manualBackup", action="store_true", help="Do a manual backup."
+    )
+    parser.add_argument(
+        "-t",
+        "--transparency",
+        action="store_true",
+        help="Make the background transparent.",
     )
 
     args = parser.parse_args()
