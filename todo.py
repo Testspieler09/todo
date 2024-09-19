@@ -505,6 +505,8 @@ class ScreenManager:
                     INDEX_LEN,
                     INDEX_REGEX,
                 )
+                if int(old_name) <= 0:
+                    return
                 new_name = self.get_input_string(
                     INSTRUCTIONS["change"]["rename"][2]
                     + f"{data[1][int(old_name)-1]}.",

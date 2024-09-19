@@ -107,6 +107,9 @@ class DataManager:
         else:
             try:
                 self.data["tasks"][task_hash].update(data)
+                self.update_groups(
+                    task_hash, self.data["order of tasks in group"].keys()
+                )
             except Exception:
                 pass
 
@@ -118,6 +121,8 @@ class DataManager:
     def add_label(self, task_hash: str, label: str) -> None:
         if task_hash not in self.data["tasks"].keys():
             return
+        if label not in self.data["labels"]:
+            self.data["labels"].append(label)
         self.data["tasks"][task_hash]["labels"].append(label)
 
     def add_group(self, task_hash: str, group: str) -> None:
