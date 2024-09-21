@@ -19,7 +19,7 @@ class FileManager:
             print("Loading JSON file failed")
 
     @classmethod
-    def for_new_file(cls, path_with_filename_and_extension: str) -> None:
+    def for_new_file(cls, path_with_filename_and_extension: str):
         """
         Alternative constructor for when the JSON file doesn't exist yet
         """
@@ -102,11 +102,17 @@ class DataManager:
         if is_new_task:
             id = self.gen_unique_hash()
             data["index"] = len(self.data["tasks"])
+            for entry in data["labels"]:
+                if entry not in self.data["labels"]:
+                    self.data["labels"].append(entry)
             self.update_groups(id, data["groups"])
             self.data["tasks"].update({id: data})
         else:
             try:
                 self.data["tasks"][task_hash].update(data)
+                for entry in data["labels"]:
+                    if entry not in self.data["labels"]:
+                        self.data["labels"].append(entry)
                 self.update_groups(
                     task_hash, self.data["order of tasks in group"].keys()
                 )

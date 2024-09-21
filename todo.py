@@ -934,7 +934,7 @@ class ScreenManager:
                 pass
         return output
 
-    def get_coordinates_for_centered_text(self, text: str) -> tuple[int]:
+    def get_coordinates_for_centered_text(self, text: str) -> tuple[int, int]:
         height, width = self.window_dimensions[0]
         start_y = height // 2
         start_x = (width // 2) - (len(text) // 2)
