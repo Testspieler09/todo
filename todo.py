@@ -44,7 +44,9 @@ from FileManager import FileManager, DataManager
 
 
 class ScreenManager:
-    def __init__(self, file: str, content=None, content_beautified=None) -> None:
+    def __init__(
+        self, file: FileManager, content=None, content_beautified=None
+    ) -> None:
         self.screen = initscr()
         self.file = file
         self.data = DataManager(self.file.data)
@@ -134,8 +136,10 @@ class ScreenManager:
             self.scroll_x, self.scroll_y, start_x, start_y, end_x, end_y
         )
 
-    def event_handler(self, event: str) -> None:
+    def event_handler(self, event: str | None) -> None:
         match event:
+            case None:
+                return
             # Scroll operations
             case "KEY_DOWN":
                 if (
@@ -485,6 +489,8 @@ class ScreenManager:
                             r"[IiNn]",
                         )
                         args = [type_of_reorder, task_hash]
+                    case _:
+                        raise Exception("There should be no other option")
                 try:
                     self.call_order_methods(input.lower(), args)
                 except Exception:
@@ -635,6 +641,8 @@ class ScreenManager:
                 index = self.get_input_string(
                     INSTRUCTIONS["delete"]["task"], INDEX_LEN, INDEX_REGEX
                 )
+                if index == 0:
+                    return
                 data_to_delete = [
                     "task",
                     self.data.get_hash_of_task_with_index(
@@ -645,6 +653,8 @@ class ScreenManager:
                 index = self.get_input_string(
                     INSTRUCTIONS["delete"]["step"], STEP_IDX_LEN, STEP_IDX_REGEX
                 )
+                if index == 0:
+                    return
                 data_to_delete = [
                     "step",
                     self.data.get_hash_of_step_with_index(
@@ -656,6 +666,8 @@ class ScreenManager:
                 index = self.get_input_string(
                     INSTRUCTIONS["delete"]["label"] + labels[0], INDEX_LEN, INDEX_REGEX
                 )
+                if index == 0:
+                    return
                 try:
                     data_to_delete = ["label", labels[1][int(index) - 1]]
                 except IndexError:
@@ -665,6 +677,8 @@ class ScreenManager:
                 index = self.get_input_string(
                     INSTRUCTIONS["delete"]["group"] + groups[0], INDEX_LEN, INDEX_REGEX
                 )
+                if index == 0:
+                    return
                 try:
                     data_to_delete = ["group", groups[1][int(index) - 1]]
                 except IndexError:
@@ -682,7 +696,7 @@ class ScreenManager:
             case "n":
                 pass
 
-    def call_order_methods(self, items_to_reorder: str, args: list[str]) -> None:
+    def call_order_methods(self, items_to_reorder: str, args: list[str]) -> str | None:
         match args[0].lower():
             case "i":
                 input = self.get_input_string(
@@ -708,7 +722,7 @@ class ScreenManager:
                             )
                     case "s":
                         step_hash = self.data.get_hash_of_step_with_task_hash_and_idx(
-                            args[1], old_idx, self.current_order_with_args
+                            args[1], old_idx
                         )
                         if args[1] == "" or step_hash == "":
                             return
@@ -732,7 +746,7 @@ class ScreenManager:
                     case "s":
                         self.data.change_order_of_steps(args[1], new_order)
 
-    def get_input(self) -> str:
+    def get_input(self) -> str | None:
         try:
             return self.screen.getkey()
         except Exception:
@@ -788,7 +802,7 @@ class ScreenManager:
 
     def get_input_new_order(
         self, p_message: str, items_to_reorder: str, args: list[str]
-    ) -> None:
+    ) -> list[str] | dict[str, int] | None:
         message = self.make_message_fit_width(
             p_message, self.window_dimensions[0][1] - 2
         )
@@ -800,7 +814,7 @@ class ScreenManager:
             content = self.data.data["order of tasks in group"][
                 self.current_order_with_args[1]
             ]
-        elif items_to_reorder == "s":
+        else:  # items_to_reorder == "s"
             content = self.data.data["tasks"][args[1]]["steps"]
         input_length = len("".join(f"{i+1}, " for i in range(len(content))))
         while True:
@@ -836,6 +850,7 @@ class ScreenManager:
             )
 
             all_indices_given = False
+            new_order_idx = []
             if match(r"^\d+(,\s*\d+)*$", input):
                 new_order_idx = [int(i) - 1 for i in input.replace(" ", "").split(",")]
                 all_indices_given = all(
@@ -855,6 +870,7 @@ class ScreenManager:
                 )
                 height_of_msg = len(message.splitlines()) + 1
 
+        new_order = []
         if items_to_reorder == "t" and self.current_order_with_args[0] == "group":
             new_order = [
                 self.data.get_hash_of_task_with_index(
@@ -872,7 +888,7 @@ class ScreenManager:
         elif items_to_reorder == "s":
             new_order = {
                 self.data.get_hash_of_step_with_task_hash_and_idx(
-                    args[1], f"{i+1}", self.current_order_with_args
+                    args[1], f"{i+1}"
                 ): idx
                 for idx, i in enumerate(new_order_idx)
             }
@@ -906,7 +922,7 @@ class ScreenManager:
         )
 
     # Some getter methods
-    def get_main_dimensions(self) -> tuple:
+    def get_main_dimensions(self) -> tuple[int, int]:
         try:
             max_dimensions = self.data.get_longest_entry_beautified()
         except ValueError:
@@ -923,7 +939,7 @@ class ScreenManager:
         return y, x
 
     @staticmethod
-    def get_all_possible_items(idx: list, items: list) -> list:
+    def get_all_possible_items(idx: str, items: tuple[str, list]) -> list:
         output = []
         for i in idx.replace(" ", "").split(","):
             try:
