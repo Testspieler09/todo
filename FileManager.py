@@ -88,7 +88,7 @@ class DataManager:
         self.TAB_INDENT = 8
         self.current_order = ["standard", ""]
 
-    def change_current_order_to(self, order: str) -> None:
+    def change_current_order_to(self, order: list) -> None:
         self.current_order = order
 
     def gen_unique_hash(self) -> str:
@@ -226,14 +226,22 @@ class DataManager:
         del self.data["order of tasks in group"][group_name][current_index]
         self.data["order of tasks in group"][group_name].insert(new_idx, task_hash)
 
-    def change_global_order_of_tasks(self, new_order: dict) -> None:
+    def change_global_order_of_tasks(
+        self, new_order: list[str] | dict[str, int]
+    ) -> None:
+        if isinstance(new_order, list):
+            raise Exception("new_order shouldnt be a list in this case")
         # new order consist of task_hash: number
         for hash, value in new_order.items():
             if hash not in self.data["tasks"].keys():
                 continue
             self.data["tasks"][hash]["index"] = value
 
-    def change_order_of_steps(self, task_hash: str, new_order: dict) -> None:
+    def change_order_of_steps(
+        self, task_hash: str, new_order: list[str] | dict[str, int]
+    ) -> None:
+        if isinstance(new_order, list):
+            raise Exception("new_order shouldnt be a list in this case")
         if task_hash not in self.data["tasks"].keys():
             return
         for hash, value in new_order.items():
@@ -241,7 +249,11 @@ class DataManager:
                 continue
             self.data["tasks"][task_hash]["steps"][hash]["index"] = value
 
-    def change_group_order_of_tasks(self, group_name: str, order: list[str]) -> None:
+    def change_group_order_of_tasks(
+        self, group_name: str, order: list[str] | dict[str, int]
+    ) -> None:
+        if isinstance(order, dict):
+            raise Exception("order shouldn't be a dict in this case")
         if group_name not in self.data["order of tasks in group"]:
             return
         self.data["order of tasks in group"][group_name] = order
@@ -320,7 +332,7 @@ class DataManager:
 
     def get_hash_of_step_with_index(
         self, idx: str, type_of_idx_with_args: list
-    ) -> tuple[str]:
+    ) -> tuple[str, str]:
         task_idx, step_idx = idx.split(".")
         task_hash = self.get_hash_of_task_with_index(
             int(task_idx), type_of_idx_with_args
@@ -334,16 +346,16 @@ class DataManager:
                 key=lambda item: item[1]["index"],
             )
         )
-        for idx, step in enumerate(sorted_data):
-            if idx == int(step_idx) - 1:
+        for index, step in enumerate(sorted_data):
+            if index == int(step_idx) - 1:
                 step_hash = step
         return (task_hash, step_hash)
 
     def get_hash_of_step_with_task_hash_and_idx(
-        self, task_hash: str, step_idx: str, type_of_idx_with_args: list
-    ) -> tuple[str]:
+        self, task_hash: str, step_idx: str
+    ) -> str:
         if task_hash == "":
-            return "", ""
+            return ""
         step_hash = ""
         sorted_data = dict(
             sorted(
@@ -356,7 +368,7 @@ class DataManager:
                 step_hash = step
         return step_hash
 
-    def get_labels(self) -> tuple[str | list]:
+    def get_labels(self) -> tuple[str, list]:
         output = "\n"
         labels_names = sorted(self.data["labels"])
         for idx, name in enumerate(labels_names):
@@ -368,14 +380,14 @@ class DataManager:
             )
         return output, labels_names
 
-    def get_data_with_label(self, label: str) -> dict | None:
+    def get_data_with_label(self, label: str) -> dict:
         dictionary = {}
         for key, values in self.data["tasks"].items():
             if label in values["labels"]:
                 dictionary.update({key: values})
         return dictionary
 
-    def get_groups(self) -> tuple[str | list]:
+    def get_groups(self) -> tuple[str, list]:
         group_names = "\n"
         list_of_groups = []
         for idx, name in enumerate(self.data["order of tasks in group"].keys()):
@@ -402,11 +414,11 @@ class DataManager:
                 dictionary.update({key: values})
         return dictionary
 
-    def get_all_data(self, *args, **kwargs) -> dict:
+    def get_all_data(self, *_) -> dict:
         return self.data["tasks"]
 
     # Beautify Data for display purposes
-    def display_task_details(self, data: dict, task_hash="") -> str:
+    def display_task_details(self, data: dict, task_hash="") -> list[list[str]]:
         """
         A function that displays all tasks passed to it and the details of a specific one
         Only pass the tasks dict or part of it to this function otherwise it wont work
@@ -455,7 +467,7 @@ class DataManager:
                     output.append(["\n", "None"])
         return output
 
-    def get_longest_entry_beautified(self) -> tuple[int]:
+    def get_longest_entry_beautified(self) -> tuple[int, int]:
         """
         Function returns the length of the longest beautified entry (height and width)
         """
